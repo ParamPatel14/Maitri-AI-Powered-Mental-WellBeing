@@ -39,3 +39,13 @@ export interface MaitriFrame {
   landmarks: Record<string, Point3D>;
   audio_cue: AudioCue | null;
 }
+
+// ── Rehabilitation types ───────────────────────────────────────────────────────
+export interface RehabRecommendation {
+  exercise: string;
+  reason:   string;
+}
+
+export interface RehabResponse {
+  recommendations: RehabRecommendation[];
+}

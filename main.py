@@ -27,6 +27,8 @@ from core.hud         import draw_source_label, resize_to_window
 from exercises        import EXERCISE_REGISTRY
 from ui.launcher      import pick_exercise, pick_source
 
+from dotenv import load_dotenv
+
 
 # ── Capture helpers ────────────────────────────────────────────────────────────
 def _open_capture(source: int | str):
@@ -54,6 +56,7 @@ def _frame_delay(cap, source) -> int:
 
 # ── Main loop ──────────────────────────────────────────────────────────────────
 def main():
+    load_dotenv()
     parser = argparse.ArgumentParser(description="Maitri – AI Workout Analyser")
     group = parser.add_mutually_exclusive_group()
     group.add_argument("--video",  type=str,       default=None,

@@ -31,11 +31,13 @@ import base64
 import json
 import logging
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 
-from exercises       import EXERCISE_REGISTRY
+from exercises        import EXERCISE_REGISTRY
 from backend.pipeline import process_frame
+from backend.rehab    import get_recommendations
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("maitri.server")
@@ -61,6 +63,42 @@ async def health():
 @app.get("/registry")
 async def registry():
     return {"exercises": list(EXERCISE_REGISTRY.keys())}
+
+
+# ── Rehab recommendation endpoint ─────────────────────────────────────────────
+class RecommendRequest(BaseModel):
+    problem: str
+
+
+@app.post("/recommend")
+async def recommend(request: RecommendRequest):
+    """
+    Call Gemini with the user's physical problem and return a list of
+    recommended exercises with reasons.
+
+    Body:   {"problem": "I have knee pain after running..."}
+    Returns: {"recommendations": [{"exercise": "Squats", "reason": "..."}]}
+    """
+    if not request.problem.strip():
+        raise HTTPException(status_code=400, detail="Problem description cannot be empty.")
+
+    loop = asyncio.get_event_loop()
+    try:
+        recs = await loop.run_in_executor(None, get_recommendations, request.problem)
+        return {"recommendations": recs}
+
+    except ValueError as e:
+        # Missing API key
+        raise HTTPException(status_code=503, detail=str(e))
+    except Exception as e:
+        import json
+        if isinstance(e, json.JSONDecodeError):
+            raise HTTPException(
+                status_code=502,
+                detail="AI returned an unexpected format. Please try again."
+            )
+        logger.error(f"/recommend error: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Recommendation failed: {str(e)}")
 
 
 # ── WebSocket endpoint ─────────────────────────────────────────────────────────
