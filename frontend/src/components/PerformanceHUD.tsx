@@ -4,6 +4,7 @@ import type { Point3D } from '../types/maitri';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
+
 // Helper for conditional tailwind classes
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
@@ -31,10 +32,11 @@ const POSE_CONNECTIONS = [
 ];
 
 export const PerformanceHUD: React.FC = () => {
-  const { frame } = useMaitriStream();
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const { frame, isConnected, sendFrame } = useMaitriStream();
+  const videoRef     = useRef<HTMLVideoElement>(null);
+  const canvasRef    = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const captureRef   = useRef<HTMLCanvasElement>(null); // hidden, used for frame encoding
 
   // Initialize webcam
   useEffect(() => {
@@ -47,18 +49,39 @@ export const PerformanceHUD: React.FC = () => {
           videoRef.current.srcObject = stream;
         }
       } catch (err) {
-        console.error("Error accessing webcam:", err);
+        console.error('Error accessing webcam:', err);
       }
     };
     startVideo();
 
     return () => {
-      if (videoRef.current && videoRef.current.srcObject) {
-        const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
-        tracks.forEach(t => t.stop());
+      if (videoRef.current?.srcObject) {
+        (videoRef.current.srcObject as MediaStream).getTracks().forEach(t => t.stop());
       }
     };
   }, []);
+
+  // Frame-capture loop — sends ~10 fps to backend for analysis
+  useEffect(() => {
+    if (!isConnected) return;
+
+    const id = setInterval(() => {
+      const video   = videoRef.current;
+      const capture = captureRef.current;
+      if (!video || !capture || video.readyState < 2) return;
+
+      capture.width  = video.videoWidth  || 640;
+      capture.height = video.videoHeight || 480;
+      const ctx = capture.getContext('2d');
+      if (!ctx) return;
+
+      ctx.drawImage(video, 0, 0);
+      const dataUrl = capture.toDataURL('image/jpeg', 0.7);
+      sendFrame(dataUrl);
+    }, 100); // 10 fps
+
+    return () => clearInterval(id);
+  }, [isConnected, sendFrame]);
 
   // Draw skeleton on canvas update
   useEffect(() => {
@@ -116,13 +139,16 @@ export const PerformanceHUD: React.FC = () => {
 
   return (
     <div className="relative w-full h-full flex flex-col p-4">
+      {/* Hidden canvas used only for JPEG encoding — never rendered */}
+      <canvas ref={captureRef} className="hidden" />
+
       {/* Ambient wrapper */}
-      <div 
+      <div
         ref={containerRef}
         className={cn(
           "relative flex-1 rounded-2xl overflow-hidden border-2 transition-all duration-300 shadow-[0_0_50px_-12px]",
-          hasIssue 
-            ? "border-red-500 shadow-red-500/50 animate-pulse" 
+          hasIssue
+            ? "border-red-500 shadow-red-500/50 animate-pulse"
             : "border-zinc-800 shadow-emerald-500/10"
         )}
       >
@@ -137,14 +163,14 @@ export const PerformanceHUD: React.FC = () => {
           ref={canvasRef}
           className="absolute inset-0 w-full h-full pointer-events-none -scale-x-100"
         />
-        
+
         {/* Feedback Pill */}
         {feedback && (
           <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10">
             <div className={cn(
               "px-6 py-3 rounded-full backdrop-blur-md border text-center font-medium shadow-2xl transition-all duration-200",
-              hasIssue 
-                ? "bg-red-500/20 border-red-500/50 text-red-50" 
+              hasIssue
+                ? "bg-red-500/20 border-red-500/50 text-red-50"
                 : "bg-emerald-500/20 border-emerald-500/50 text-emerald-50"
             )}>
               {feedback}

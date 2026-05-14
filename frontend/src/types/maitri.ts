@@ -25,6 +25,11 @@ export interface MaitriResult {
   metrics: MaitriMetrics;
 }
 
+export interface AudioCue {
+  text: string;
+  urgent: boolean;
+}
+
 export interface MaitriFrame {
   timestamp: number;
   exercise: string;
@@ -32,4 +37,5 @@ export interface MaitriFrame {
   dimensions: { width: number; height: number };
   result: MaitriResult;
   landmarks: Record<string, Point3D>;
+  audio_cue: AudioCue | null;
 }

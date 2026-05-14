@@ -1,0 +1,128 @@
+"""
+backend/server.py
+──────────────────
+FastAPI server providing the Maitri REST + WebSocket API.
+
+Startup
+───────
+    cd c:\\Projects\\maitri
+    .venv\\Scripts\\uvicorn backend.server:app --reload --port 8000
+
+Endpoints
+─────────
+    GET  /health    — liveness probe
+    GET  /registry  — list of available exercises
+    WS   /ws        — real-time analysis stream
+
+WebSocket protocol  (client → server, JSON strings)
+────────────────────────────────────────────────────
+    {"type": "start",  "exercise": "Squats"}
+    {"type": "frame",  "data": "<base64-jpeg>"}
+    {"type": "stop"}
+
+WebSocket protocol  (server → client, JSON strings)
+────────────────────────────────────────────────────
+    See backend/pipeline.py for the full payload schema.
+    status field is always present: "ok" | "no_pose" | "session_started" | "error"
+"""
+
+import asyncio
+import base64
+import json
+import logging
+
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi.middleware.cors import CORSMiddleware
+
+from exercises       import EXERCISE_REGISTRY
+from backend.pipeline import process_frame
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("maitri.server")
+
+# ── App setup ──────────────────────────────────────────────────────────────────
+app = FastAPI(title="Maitri Core API", version="1.0.0")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+# ── REST endpoints ─────────────────────────────────────────────────────────────
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
+
+
+@app.get("/registry")
+async def registry():
+    return {"exercises": list(EXERCISE_REGISTRY.keys())}
+
+
+# ── WebSocket endpoint ─────────────────────────────────────────────────────────
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    logger.info("Client connected")
+
+    analyser = None
+    loop     = asyncio.get_event_loop()
+
+    async def send(payload: dict) -> None:
+        await websocket.send_text(json.dumps(payload))
+
+    try:
+        while True:
+            raw     = await websocket.receive_text()
+            message = json.loads(raw)
+            kind    = message.get("type")
+
+            # ── Select exercise ────────────────────────────────────────────────
+            if kind == "start":
+                exercise = message.get("exercise", "Squats")
+                if exercise not in EXERCISE_REGISTRY:
+                    await send({"status": "error",
+                                "message": f"Unknown exercise '{exercise}'. "
+                                           f"Available: {list(EXERCISE_REGISTRY)}"})
+                    continue
+                analyser = EXERCISE_REGISTRY[exercise]()
+                logger.info(f"Session started: {exercise}")
+                await send({"status": "session_started", "exercise": exercise})
+
+            # ── Process video frame ────────────────────────────────────────────
+            elif kind == "frame":
+                if analyser is None:
+                    await send({"status": "error",
+                                "message": "Send {type:'start', exercise:'...'} first."})
+                    continue
+
+                data_url = message.get("data", "")
+                if "," in data_url:           # strip "data:image/jpeg;base64," prefix
+                    data_url = data_url.split(",", 1)[1]
+
+                jpeg_bytes = base64.b64decode(data_url)
+
+                # Run blocking CPU work off the async event loop
+                payload = await loop.run_in_executor(
+                    None, process_frame, jpeg_bytes, analyser
+                )
+                await send(payload)
+
+            # ── Stop session ───────────────────────────────────────────────────
+            elif kind == "stop":
+                analyser = None
+                logger.info("Session stopped by client")
+                await send({"status": "session_stopped"})
+
+    except WebSocketDisconnect:
+        logger.info("Client disconnected")
+    except Exception as e:
+        logger.error(f"WebSocket error: {e}", exc_info=True)
+        try:
+            await send({"status": "error", "message": str(e)})
+        except Exception:
+            pass
