@@ -18,14 +18,15 @@ Steps to add a new exercise
 That's it.  main.py and core/ require no changes.
 """
 
-from exercises.squats.analyser import SquatAnalytics
+from exercises.squats.analyser   import SquatAnalytics
+from exercises.push_ups.analyser import PushUpAnalytics
 
 # ── Registry ───────────────────────────────────────────────────────────────────
 # Maps human-readable exercise name  →  BaseAnalyser subclass (not instance).
 # The launcher uses this dict to populate the exercise-picker dialog.
 EXERCISE_REGISTRY: dict[str, type] = {
-    "Squats": SquatAnalytics,
-    # "Push-ups":  PushUpAnalytics,   ← example future entry
-    # "Lunges":    LungeAnalytics,
+    "Squats":   SquatAnalytics,
+    "Push-ups": PushUpAnalytics,
+    # "Lunges":    LungeAnalytics,    ← example future entry
     # "Deadlifts": DeadliftAnalytics,
 }

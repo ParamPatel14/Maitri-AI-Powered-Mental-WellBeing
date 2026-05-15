@@ -54,6 +54,10 @@ class PoseLandmarks:
     right_shoulder: Point3D
     left_ear:       Point3D
     right_ear:      Point3D
+    left_elbow:     Point3D
+    right_elbow:    Point3D
+    left_wrist:     Point3D
+    right_wrist:    Point3D
     # Core
     left_hip:       Point3D
     right_hip:      Point3D
@@ -105,6 +109,10 @@ def extract_landmarks(frame: np.ndarray) -> tuple[Optional[PoseLandmarks], objec
         right_shoulder = right_shoulder,
         left_ear       = _get(PL.LEFT_EAR.value),
         right_ear      = _get(PL.RIGHT_EAR.value),
+        left_elbow     = _get(PL.LEFT_ELBOW.value),
+        right_elbow    = _get(PL.RIGHT_ELBOW.value),
+        left_wrist     = _get(PL.LEFT_WRIST.value),
+        right_wrist    = _get(PL.RIGHT_WRIST.value),
         left_hip       = _get(PL.LEFT_HIP.value),
         right_hip      = _get(PL.RIGHT_HIP.value),
         left_knee      = _get(PL.LEFT_KNEE.value),
