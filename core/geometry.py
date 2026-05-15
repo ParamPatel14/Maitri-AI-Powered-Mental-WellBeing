@@ -40,3 +40,30 @@ def pt(landmark) -> np.ndarray:
     >>> angle = calculate_angle(pt(lm.left_hip), pt(lm.left_knee), pt(lm.left_ankle))
     """
     return np.array([landmark.x, landmark.y, landmark.z], dtype=float)
+
+
+def signed_body_deviation(hip, shoulder, ankle) -> float:
+    """
+    Signed perpendicular distance of *hip* from the shoulder–ankle line
+    using only the 2-D (x, y) normalised coordinates.
+
+    Positive  → hip is BELOW the line (sagging toward the floor).
+    Negative  → hip is ABOVE the line (piking toward the ceiling).
+
+    Returns 0.0 for front-on camera angles where the shoulder–ankle line
+    is nearly vertical (line length < 1e-6 in normalised space).
+
+    All intermediate numpy types are cast to Python float before return
+    so the result is always JSON-serialisable.
+    """
+    s = np.array([float(shoulder.x), float(shoulder.y)])
+    a = np.array([float(ankle.x),    float(ankle.y)])
+    h = np.array([float(hip.x),      float(hip.y)])
+
+    line_vec = a - s
+    line_len = float(np.linalg.norm(line_vec))
+    if line_len < 1e-6:
+        return 0.0
+
+    cross = float(np.cross(line_vec, h - s))
+    return float(cross / line_len)

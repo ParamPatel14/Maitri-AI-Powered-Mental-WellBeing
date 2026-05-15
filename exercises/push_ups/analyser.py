@@ -28,7 +28,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 from core.base_analyser import BaseAnalyser, BaseResult
-from core.geometry      import calculate_angle, pt
+from core.geometry      import calculate_angle, pt, signed_body_deviation
 from exercises.push_ups.hud import draw_pushup_hud
 
 
@@ -181,11 +181,10 @@ class PushUpAnalytics(BaseAnalyser):
                 rep_just_completed = True
                 half_rep = self._min_elbow_this_rep > self.elbow_bottom_angle
 
-        # 3. Hip alignment (best from side profile)
-        #    Use the visible-side shoulder and ankle (pick the one with
-        #    higher visibility / larger x-spread from hip).
-        left_dev  = _signed_hip_deviation(landmarks.left_hip,  landmarks.left_shoulder,  landmarks.left_ankle)
-        right_dev = _signed_hip_deviation(landmarks.right_hip, landmarks.right_shoulder, landmarks.right_ankle)
+        # 3. Hip alignment  (best from side profile)
+        #    Pick the side whose shoulder–ankle line is longer (more visible).
+        left_dev  = signed_body_deviation(landmarks.left_hip,  landmarks.left_shoulder,  landmarks.left_ankle)
+        right_dev = signed_body_deviation(landmarks.right_hip, landmarks.right_shoulder, landmarks.right_ankle)
         # Choose the side whose shoulder–ankle line has more length
         left_len  = abs(landmarks.left_shoulder.y  - landmarks.left_ankle.y)
         right_len = abs(landmarks.right_shoulder.y - landmarks.right_ankle.y)
