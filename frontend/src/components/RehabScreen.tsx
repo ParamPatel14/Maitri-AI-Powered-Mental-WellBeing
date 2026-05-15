@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Activity, Stethoscope, Play, Loader2, AlertCircle, ArrowLeft, CheckCircle, Construction, Zap } from 'lucide-react';
+import { Activity, Stethoscope, Play, Loader2, AlertCircle, ArrowLeft, Zap } from 'lucide-react';
 import { useMaitriStream } from '../context/MaitriStreamContext';
 import type { RehabRecommendation } from '../types/maitri';
 
@@ -14,49 +14,23 @@ const ExerciseCard: React.FC<{
   available: boolean;
   onStart: (exercise: string) => void;
 }> = ({ rec, available, onStart }) => (
-  <div className={`
-    relative flex flex-col gap-4 p-5 rounded-2xl border transition-all duration-200
-    ${available
-      ? 'border-emerald-500/30 bg-emerald-500/5 hover:border-emerald-500/60 hover:bg-emerald-500/10'
-      : 'border-zinc-700/50 bg-zinc-900/50'}
-  `}>
-    {/* Status badge */}
-    <div className="flex items-center justify-between">
-      <span className={`
-        inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full
-        ${available
-          ? 'bg-emerald-500/15 text-emerald-400'
-          : 'bg-amber-500/10 text-amber-500'}
-      `}>
-        {available
-          ? <><CheckCircle className="w-3 h-3" /> Available</>
-          : <><Construction className="w-3 h-3" /> Coming Soon</>}
-      </span>
-    </div>
-
+  <div className="relative flex flex-col gap-4 p-5 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 hover:border-emerald-500/60 hover:bg-emerald-500/10 transition-all duration-200">
     {/* Exercise name */}
     <div>
-      <h3 className={`text-lg font-bold mb-2 ${available ? 'text-zinc-50' : 'text-zinc-400'}`}>
-        {rec.exercise}
-      </h3>
+      <h3 className="text-lg font-bold mb-2 text-zinc-50">{rec.exercise}</h3>
       <p className="text-sm text-zinc-400 leading-relaxed">{rec.reason}</p>
     </div>
 
-    {/* Action */}
-    {available ? (
-      <button
-        onClick={() => onStart(rec.exercise)}
-        className="mt-auto flex items-center justify-center gap-2 w-full bg-emerald-500 hover:bg-emerald-400 active:scale-[0.98] text-zinc-950 font-semibold rounded-xl px-4 py-2.5 transition-all duration-150"
-      >
-        <Play className="w-4 h-4 fill-current" />
-        Start Session
-      </button>
-    ) : (
-      <div className="mt-auto flex items-center justify-center gap-2 w-full bg-zinc-800 text-zinc-500 font-medium rounded-xl px-4 py-2.5 cursor-not-allowed select-none">
-        <Construction className="w-4 h-4" />
-        Module Not Yet Available
-      </div>
-    )}
+    {/* Action — disabled when module not yet implemented, but visually identical */}
+    <button
+      onClick={() => available && onStart(rec.exercise)}
+      disabled={!available}
+      title={available ? undefined : 'This exercise module is not yet available'}
+      className="mt-auto flex items-center justify-center gap-2 w-full bg-emerald-500 hover:bg-emerald-400 active:scale-[0.98] text-zinc-950 font-semibold rounded-xl px-4 py-2.5 text-sm transition-all duration-150 "
+    >
+      <Play className="w-4 h-4 fill-current" />
+      Start Session
+    </button>
   </div>
 );
 

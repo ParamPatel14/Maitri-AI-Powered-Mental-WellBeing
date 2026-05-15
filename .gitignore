@@ -1,4 +1,7 @@
 .venv/
 __pycache__/
-AGENTS.md
 .env
+
+PROJECT_BLUEPRINT.md
+FRONTEND_WORKFLOW.md
+AGENTS.md
