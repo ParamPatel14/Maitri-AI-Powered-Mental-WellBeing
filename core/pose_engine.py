@@ -36,6 +36,7 @@ class Point3D:
     x: float
     y: float
     z: float
+    visibility: float | None = None
 
 
 @dataclass
@@ -68,6 +69,8 @@ class PoseLandmarks:
     right_ankle:    Point3D
     # Derived
     neck:           Point3D   # midpoint of left/right shoulders
+    pose_quality:   float = 0.0
+    camera_view:    str = "unknown"
 
 
 # ── Public API ─────────────────────────────────────────────────────────────────
@@ -92,7 +95,7 @@ def extract_landmarks(frame: np.ndarray) -> tuple[Optional[PoseLandmarks], objec
 
     def _get(idx: int) -> Point3D:
         lm = lms[idx]
-        return Point3D(x=lm.x, y=lm.y, z=lm.z)
+        return Point3D(x=lm.x, y=lm.y, z=lm.z, visibility=float(getattr(lm, "visibility", 0.0)))
 
     PL = mp_pose.PoseLandmark
     left_shoulder  = _get(PL.LEFT_SHOULDER.value)
@@ -103,6 +106,33 @@ def extract_landmarks(frame: np.ndarray) -> tuple[Optional[PoseLandmarks], objec
         y=(left_shoulder.y + right_shoulder.y) / 2.0,
         z=(left_shoulder.z + right_shoulder.z) / 2.0,
     )
+
+    tracked_idxs = [
+        PL.LEFT_SHOULDER.value, PL.RIGHT_SHOULDER.value,
+        PL.LEFT_EAR.value, PL.RIGHT_EAR.value,
+        PL.LEFT_ELBOW.value, PL.RIGHT_ELBOW.value,
+        PL.LEFT_WRIST.value, PL.RIGHT_WRIST.value,
+        PL.LEFT_HIP.value, PL.RIGHT_HIP.value,
+        PL.LEFT_KNEE.value, PL.RIGHT_KNEE.value,
+        PL.LEFT_ANKLE.value, PL.RIGHT_ANKLE.value,
+    ]
+    vis = [float(lms[i].visibility) for i in tracked_idxs if hasattr(lms[i], "visibility")]
+    pose_quality = float(sum(vis) / len(vis)) if vis else 0.0
+
+    mid_hip = Point3D(
+        x=(lms[PL.LEFT_HIP.value].x + lms[PL.RIGHT_HIP.value].x) / 2.0,
+        y=(lms[PL.LEFT_HIP.value].y + lms[PL.RIGHT_HIP.value].y) / 2.0,
+        z=(lms[PL.LEFT_HIP.value].z + lms[PL.RIGHT_HIP.value].z) / 2.0,
+    )
+    shoulder_width = abs(left_shoulder.x - right_shoulder.x)
+    torso_height = abs(neck.y - mid_hip.y)
+    view_ratio = shoulder_width / (torso_height + 1e-6)
+    if view_ratio < 0.35:
+        camera_view = "side"
+    elif view_ratio > 0.55:
+        camera_view = "front"
+    else:
+        camera_view = "unknown"
 
     return PoseLandmarks(
         left_shoulder  = left_shoulder,
@@ -120,6 +150,8 @@ def extract_landmarks(frame: np.ndarray) -> tuple[Optional[PoseLandmarks], objec
         left_ankle     = _get(PL.LEFT_ANKLE.value),
         right_ankle    = _get(PL.RIGHT_ANKLE.value),
         neck           = neck,
+        pose_quality   = pose_quality,
+        camera_view    = camera_view,
     ), results
 
 

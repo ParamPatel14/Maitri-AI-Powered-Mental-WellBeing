@@ -109,6 +109,7 @@ class PushUpAnalytics(BaseAnalyser):
     """
 
     name = "Push-ups"
+    recommended_view = "side"
 
     def __init__(
         self,

@@ -13,6 +13,10 @@ interface MaitriContextState {
   isConnecting:       boolean;
   frame:              MaitriFrame | null;
   error:              string | null;
+  patient:            { id: string; name: string } | null;
+  goalMode:           'Rehab' | 'Strength' | 'Endurance';
+  setPatientName:     (name: string) => void;
+  setGoalMode:        (mode: 'Rehab' | 'Strength' | 'Endurance') => void;
   startSession:  (exercise: string) => void;
   stopSession:   () => void;
   /** Send a base64 data-URL JPEG frame to the backend for analysis. */
@@ -51,11 +55,53 @@ export const MaitriProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const [isConnecting,       setIsConnecting]       = useState(false);
   const [frame,              setFrame]              = useState<MaitriFrame | null>(null);
   const [error,              setError]              = useState<string | null>(null);
+  const [patient,            setPatient]            = useState<{ id: string; name: string } | null>(null);
+  const [goalMode,           setGoalMode]           = useState<'Rehab' | 'Strength' | 'Endurance'>('Rehab');
 
   const wsRef = useRef<WebSocket | null>(null);
 
-  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
-  const WS_URL      = import.meta.env.VITE_WS_URL      || 'ws://localhost:8000/ws';
+  const RAW_BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:8000';
+  const RAW_WS_URL      = import.meta.env.VITE_WS_URL      || 'ws://127.0.0.1:8000/ws';
+
+  const BACKEND_URL = String(RAW_BACKEND_URL)
+    .replace('https://localhost', 'http://127.0.0.1')
+    .replace('http://localhost', 'http://127.0.0.1');
+
+  const WS_URL = String(RAW_WS_URL)
+    .replace('wss://localhost', 'ws://127.0.0.1')
+    .replace('ws://localhost', 'ws://127.0.0.1');
+  const CALIBRATION_SECONDS = Number(import.meta.env.VITE_CALIBRATION_SECONDS || 15);
+
+  useEffect(() => {
+    try {
+      const storedPatient = localStorage.getItem('maitri.patient');
+      if (storedPatient) setPatient(JSON.parse(storedPatient));
+      const storedGoal = localStorage.getItem('maitri.goalMode');
+      if (storedGoal === 'Rehab' || storedGoal === 'Strength' || storedGoal === 'Endurance') {
+        setGoalMode(storedGoal);
+      }
+    } catch {
+      setPatient(null);
+      setGoalMode('Rehab');
+    }
+  }, []);
+
+  const setPatientName = useCallback((name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) {
+      setPatient(null);
+      try { localStorage.removeItem('maitri.patient'); } catch {}
+      return;
+    }
+    const next = { id: (patient?.id || (crypto?.randomUUID?.() ?? `local-${Date.now()}`)), name: trimmed };
+    setPatient(next);
+    try { localStorage.setItem('maitri.patient', JSON.stringify(next)); } catch {}
+  }, [patient?.id]);
+
+  const setGoalModePersist = useCallback((mode: 'Rehab' | 'Strength' | 'Endurance') => {
+    setGoalMode(mode);
+    try { localStorage.setItem('maitri.goalMode', mode); } catch {}
+  }, []);
 
   // ── Fetch exercise registry on boot ─────────────────────────────────────────
   useEffect(() => {
@@ -103,7 +149,13 @@ export const MaitriProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
     ws.onopen = () => {
       setIsConnecting(false);
-      ws.send(JSON.stringify({ type: 'start', exercise }));
+      ws.send(JSON.stringify({
+        type: 'start',
+        exercise,
+        goal_mode: goalMode,
+        patient,
+        calibration_seconds: CALIBRATION_SECONDS,
+      }));
     };
 
     ws.onmessage = (event: MessageEvent) => {
@@ -121,7 +173,7 @@ export const MaitriProvider: React.FC<{ children: ReactNode }> = ({ children }) 
           return;
         }
 
-        if (status === 'ok' || status === 'no_pose') {
+        if (status === 'ok' || status === 'no_pose' || status === 'calibrating' || status === 'decode_error') {
           setFrame(payload as MaitriFrame);
 
           // ── Web Speech API audio routing ───────────────────────────────────
@@ -148,7 +200,7 @@ export const MaitriProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     };
 
     wsRef.current = ws;
-  }, [WS_URL]);
+  }, [WS_URL, goalMode, patient, CALIBRATION_SECONDS]);
 
   // ── stopSession ──────────────────────────────────────────────────────────────
   const stopSession = useCallback(() => {
@@ -168,6 +220,9 @@ export const MaitriProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       availableExercises, currentExercise,
       isConnected, isConnecting,
       frame, error,
+      patient, goalMode,
+      setPatientName,
+      setGoalMode: setGoalModePersist,
       startSession, stopSession, sendFrame,
     }}>
       {children}

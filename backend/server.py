@@ -36,7 +36,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from exercises        import EXERCISE_REGISTRY
-from backend.pipeline import process_frame
+from backend.pipeline import process_frame, CalibrationState
 from backend.rehab    import get_recommendations
 
 logging.basicConfig(level=logging.INFO)
@@ -48,6 +48,7 @@ app = FastAPI(title="Maitri Core API", version="1.0.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origin_regex=r"^http://(localhost|127\.0\.0\.1):\d+$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -108,6 +109,8 @@ async def websocket_endpoint(websocket: WebSocket):
     logger.info("Client connected")
 
     analyser = None
+    calibration = None
+    session_ctx: dict | None = None
     loop     = asyncio.get_event_loop()
 
     async def send(payload: dict) -> None:
@@ -128,8 +131,12 @@ async def websocket_endpoint(websocket: WebSocket):
                                            f"Available: {list(EXERCISE_REGISTRY)}"})
                     continue
                 analyser = EXERCISE_REGISTRY[exercise]()
+                goal_mode = message.get("goal_mode") or "Rehab"
+                patient = message.get("patient") or None
+                session_ctx = {"goal_mode": goal_mode, "patient": patient}
+                calibration = CalibrationState(duration_s=float(message.get("calibration_seconds", 15.0)))
                 logger.info(f"Session started: {exercise}")
-                await send({"status": "session_started", "exercise": exercise})
+                await send({"status": "session_started", "exercise": exercise, "goal_mode": goal_mode, "patient": patient})
 
             # ── Process video frame ────────────────────────────────────────────
             elif kind == "frame":
@@ -146,13 +153,15 @@ async def websocket_endpoint(websocket: WebSocket):
 
                 # Run blocking CPU work off the async event loop
                 payload = await loop.run_in_executor(
-                    None, process_frame, jpeg_bytes, analyser
+                    None, process_frame, jpeg_bytes, analyser, None, calibration, session_ctx
                 )
                 await send(payload)
 
             # ── Stop session ───────────────────────────────────────────────────
             elif kind == "stop":
                 analyser = None
+                calibration = None
+                session_ctx = None
                 logger.info("Session stopped by client")
                 await send({"status": "session_stopped"})
 

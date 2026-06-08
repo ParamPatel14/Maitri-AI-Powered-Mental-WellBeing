@@ -56,6 +56,16 @@ class BaseAnalyser(ABC):
 
     #: Human-readable exercise name shown in the launcher and HUD title.
     name: str = "Unknown Exercise"
+    recommended_view: str = "unknown"
+
+    def configure(
+        self,
+        *,
+        goal_mode: str | None = None,
+        calibration: dict | None = None,
+        patient: dict | None = None,
+    ) -> None:
+        return
 
     @abstractmethod
     def evaluate(self, landmarks) -> Optional[BaseResult]:
@@ -109,4 +119,3 @@ class BaseAnalyser(ABC):
           seconds after any form error so corrections take priority.
         """
         ...
-

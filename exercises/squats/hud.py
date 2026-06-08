@@ -66,13 +66,14 @@ def draw_squat_hud(frame: np.ndarray, result) -> None:
 
     # ── Metrics panel (top-right) ─────────────────────────────────────────────
     panel_x = w - 210
-    blend_rect(frame, panel_x, 10, w - 10, 175, DARK)
+    blend_rect(frame, panel_x, 10, w - 10, 210, DARK)
 
     metrics = [
         ("L Knee", f"{result.left_knee_angle:5.1f}\u00b0"),
         ("R Knee", f"{result.right_knee_angle:5.1f}\u00b0"),
         ("Torso",  f"{result.torso_angle:5.1f}\u00b0"),
         ("K/H",    f"{result.hip_to_knee_ratio:.2f}"),
+        ("Score",  f"{result.session_score:5.1f}"),
     ]
     for i, (label, val) in enumerate(metrics):
         y = 40 + i * 34

@@ -90,6 +90,7 @@ class PlankAnalytics(BaseAnalyser):
     """
 
     name = "Planks"
+    recommended_view = "side"
 
     def __init__(
         self,

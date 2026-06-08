@@ -21,6 +21,8 @@ That's it.  main.py and core/ require no changes.
 from exercises.squats.analyser   import SquatAnalytics
 from exercises.push_ups.analyser import PushUpAnalytics
 from exercises.planks.analyser   import PlankAnalytics
+from exercises.bicep_curls.analyser import BicepCurlAnalytics
+from exercises.shoulder_press.analyser import ShoulderPressAnalytics
 
 # ── Registry ───────────────────────────────────────────────────────────────────
 # Maps human-readable exercise name  →  BaseAnalyser subclass (not instance).
@@ -29,6 +31,8 @@ EXERCISE_REGISTRY: dict[str, type] = {
     "Squats":   SquatAnalytics,
     "Push-ups": PushUpAnalytics,
     "Planks":   PlankAnalytics,
+    "Bicep Curls": BicepCurlAnalytics,
+    "Shoulder Press": ShoulderPressAnalytics,
     # "Lunges":    LungeAnalytics,    ← example future entry
     # "Deadlifts": DeadliftAnalytics,
 }

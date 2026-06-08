@@ -5,7 +5,7 @@ import { useMaitriStream } from '../context/MaitriStreamContext';
 import { LogOut } from 'lucide-react';
 
 export const ActiveSession: React.FC = () => {
-  const { currentExercise, stopSession } = useMaitriStream();
+  const { currentExercise, stopSession, patient, goalMode } = useMaitriStream();
 
   return (
     <div className="flex flex-col h-screen w-full bg-zinc-950 text-zinc-50 overflow-hidden">
@@ -15,6 +15,10 @@ export const ActiveSession: React.FC = () => {
           <h1 className="font-semibold text-lg tracking-wide">
             Maitri Core <span className="text-zinc-500 font-normal">/</span> {currentExercise}
           </h1>
+          <div className="hidden md:flex items-center gap-2 text-xs text-zinc-500">
+            {patient?.name ? <span className="px-2 py-1 rounded-full border border-zinc-800 bg-zinc-950/60">{patient.name}</span> : null}
+            <span className="px-2 py-1 rounded-full border border-zinc-800 bg-zinc-950/60">{goalMode}</span>
+          </div>
         </div>
         <button 
           onClick={stopSession}

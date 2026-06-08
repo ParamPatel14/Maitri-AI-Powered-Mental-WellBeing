@@ -102,14 +102,14 @@ export const PerformanceHUD: React.FC = () => {
 
     ctx.clearRect(0, 0, width, height);
 
-    if (frame?.landmarks) {
-      const { landmarks } = frame;
+    const landmarks = frame?.landmarks;
+    if (landmarks) {
 
       // Draw connections
       ctx.strokeStyle = '#10b981'; // Emerald 500
       ctx.lineWidth = 3;
       
-      if (frame.result.has_issue) {
+      if (frame.result?.has_issue) {
          ctx.strokeStyle = '#ef4444'; // Red 500
       }
 
@@ -134,8 +134,19 @@ export const PerformanceHUD: React.FC = () => {
     }
   }, [frame]);
 
-  const hasIssue = frame?.result?.has_issue;
-  const feedback = frame?.result?.feedback;
+  const hasIssue = Boolean(frame?.result?.has_issue);
+  const feedback = frame?.result?.feedback || null;
+  const onboardingMessage =
+    frame?.calibration?.state === 'running'
+      ? frame.calibration.message
+      : frame?.status === 'no_pose'
+        ? 'Move into frame'
+        : frame?.pose?.quality !== undefined && frame.pose.quality < 0.65
+          ? 'Hold still and make sure your full body is visible'
+          : frame?.pose?.recommended_view && frame?.pose?.camera_view && frame.pose.recommended_view !== 'unknown' && frame.pose.camera_view !== 'none' && frame.pose.recommended_view !== frame.pose.camera_view
+            ? (frame.pose.recommended_view === 'side' ? 'Turn sideways to the camera' : 'Face the camera')
+            : null;
+  const poseQuality = frame?.pose?.quality;
 
   return (
     <div className="relative w-full h-full flex flex-col p-4">
@@ -163,6 +174,39 @@ export const PerformanceHUD: React.FC = () => {
           ref={canvasRef}
           className="absolute inset-0 w-full h-full pointer-events-none -scale-x-100"
         />
+
+        <div className="absolute top-4 left-4 z-10 flex items-center gap-3">
+          <div className="px-3 py-1.5 rounded-full border border-zinc-800 bg-zinc-950/60 backdrop-blur-md text-xs font-semibold text-zinc-200">
+            Pose: {poseQuality !== undefined ? `${Math.round(poseQuality * 100)}%` : '--'}
+          </div>
+          {frame?.pose?.camera_view && frame.pose.camera_view !== 'none' && (
+            <div className="px-3 py-1.5 rounded-full border border-zinc-800 bg-zinc-950/60 backdrop-blur-md text-xs font-semibold text-zinc-200">
+              View: {frame.pose.camera_view}
+            </div>
+          )}
+        </div>
+
+        {frame?.calibration?.state === 'running' && (
+          <div className="absolute top-4 right-4 z-10 w-56">
+            <div className="px-3 py-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 backdrop-blur-md">
+              <div className="text-xs font-semibold text-emerald-200 mb-2">Calibrating</div>
+              <div className="h-2 w-full bg-zinc-800 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-emerald-500"
+                  style={{ width: `${Math.round((frame.calibration.progress || 0) * 100)}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {onboardingMessage && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
+            <div className="px-6 py-4 rounded-2xl border border-zinc-800 bg-zinc-950/70 backdrop-blur-md text-zinc-100 font-semibold text-center max-w-md">
+              {onboardingMessage}
+            </div>
+          </div>
+        )}
 
         {/* Feedback Pill */}
         {feedback && (

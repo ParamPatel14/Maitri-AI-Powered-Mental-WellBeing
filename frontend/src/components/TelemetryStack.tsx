@@ -22,6 +22,8 @@ export const TelemetryStack: React.FC = () => {
 
   const result = frame?.result;
   const metrics = result?.metrics;
+  const sessionScore = typeof metrics?.session_score === 'number' ? metrics.session_score : undefined;
+  const goodRepPercent = typeof metrics?.good_rep_percent === 'number' ? metrics.good_rep_percent : undefined;
 
   // Rep Pop Animation Effect
   const [pop, setPop] = useState(false);
@@ -81,7 +83,7 @@ export const TelemetryStack: React.FC = () => {
           <span className="text-zinc-400 text-xs uppercase tracking-wider font-semibold mb-4">Phase</span>
           <div className="flex-1 flex flex-col justify-between relative">
             <div className="absolute left-[7px] top-2 bottom-2 w-0.5 bg-zinc-800"></div>
-            {['standing', 'descending', 'ascending'].map((p) => {
+            {['standing', 'descending', 'bottom', 'ascending'].map((p) => {
               const isActive = metrics?.phase === p;
               return (
                 <div key={p} className="flex items-center gap-3 relative z-10">
@@ -106,6 +108,8 @@ export const TelemetryStack: React.FC = () => {
         <MetricGauge label="R Knee Angle" value={metrics?.right_knee_angle} />
         <MetricGauge label="Torso Angle" value={metrics?.torso_angle} />
         <MetricGauge label="Hip:Knee Ratio" value={metrics?.hip_to_knee_ratio} unit="x" />
+        <MetricGauge label="Session Score" value={sessionScore} unit="" />
+        <MetricGauge label="Good Rep %" value={goodRepPercent} unit="%" />
       </div>
 
       {/* Bottom Section: Trend Analytics */}
