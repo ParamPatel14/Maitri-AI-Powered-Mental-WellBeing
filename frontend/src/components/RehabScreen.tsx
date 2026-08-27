@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Activity, Stethoscope, Play, Loader2, AlertCircle, ArrowLeft, Zap } from 'lucide-react';
 import { useMaitriStream } from '../context/MaitriStreamContext';
 import type { RehabRecommendation } from '../types/maitri';
@@ -127,6 +128,7 @@ const ConnectingOverlay: React.FC = () => (
 
 // ── Main screen ────────────────────────────────────────────────────────────────
 export const RehabScreen: React.FC = () => {
+  const navigate = useNavigate();
   const { availableExercises, startSession, isConnecting, error: wsError, patient, goalMode, setPatientName, setGoalMode } = useMaitriStream();
 
   const [problem,         setProblem]         = useState('');
@@ -261,6 +263,12 @@ export const RehabScreen: React.FC = () => {
       <>
         {tutorialModal}
         <div className="flex h-screen w-full flex-col items-center justify-center bg-zinc-50 text-zinc-950 gap-6">
+          <button
+            onClick={() => navigate('/')}
+            className="absolute top-6 left-6 flex items-center gap-2 text-zinc-500 hover:text-zinc-800 transition-colors text-sm font-medium"
+          >
+            <ArrowLeft className="w-4 h-4" /> Back to Home
+          </button>
           <div className="relative">
             <div className="absolute inset-0 bg-emerald-500/20 rounded-full blur-2xl" />
             <Loader2 className="relative w-16 h-16 text-emerald-500 animate-spin" />
@@ -331,6 +339,12 @@ export const RehabScreen: React.FC = () => {
       <>
         {tutorialModal}
         <div className="flex h-screen w-full flex-col items-center justify-center bg-zinc-50 text-zinc-950 gap-6 px-6">
+          <button
+            onClick={() => navigate('/')}
+            className="absolute top-6 left-6 flex items-center gap-2 text-zinc-500 hover:text-zinc-800 transition-colors text-sm font-medium"
+          >
+            <ArrowLeft className="w-4 h-4" /> Back to Home
+          </button>
           <div className="w-full max-w-md p-6 rounded-2xl bg-red-50 border border-red-200 text-center">
             <AlertCircle className="w-10 h-10 text-red-500 mx-auto mb-3" />
             <h2 className="text-lg font-semibold mb-2">Something went wrong</h2>
@@ -354,6 +368,14 @@ export const RehabScreen: React.FC = () => {
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-[150px] pointer-events-none" />
 
       <div className="relative z-10 w-full max-w-xl">
+        {/* Back to Home */}
+        <button
+          onClick={() => navigate('/')}
+          className="flex items-center gap-2 text-zinc-500 hover:text-zinc-800 transition-colors mb-6 text-sm font-medium"
+        >
+          <ArrowLeft className="w-4 h-4" /> Back to Home
+        </button>
+
         {/* Logo / Header */}
         <div className="flex items-center gap-3 mb-2">
           <div className="p-2 rounded-xl bg-emerald-100 border border-emerald-200">

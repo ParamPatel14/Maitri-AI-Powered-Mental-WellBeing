@@ -1,11 +1,10 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Activity, Brain, ArrowRight, Sparkles } from 'lucide-react';
 
-interface LandingPageProps {
-  onSelect: (mode: 'physical' | 'psychological') => void;
-}
+export const LandingPage: React.FC = () => {
+  const navigate = useNavigate();
 
-export const LandingPage: React.FC<LandingPageProps> = ({ onSelect }) => {
   return (
     <div className="relative flex min-h-screen w-full items-center justify-center bg-zinc-50 text-zinc-950 px-6 overflow-hidden">
       {/* Ambient background glows */}
@@ -31,7 +30,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onSelect }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Physical Wellness Card */}
           <button
-            onClick={() => onSelect('physical')}
+            onClick={() => navigate('/physical')}
             className="group relative text-left p-8 rounded-3xl border border-emerald-200 bg-white hover:border-emerald-400 hover:shadow-lg hover:shadow-emerald-500/10 transition-all duration-300"
           >
             {/* Icon */}
@@ -61,7 +60,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onSelect }) => {
 
           {/* Psychological Wellness Card */}
           <button
-            onClick={() => onSelect('psychological')}
+            onClick={() => navigate('/psychological')}
             className="group relative text-left p-8 rounded-3xl border border-violet-200 bg-white hover:border-violet-400 hover:shadow-lg hover:shadow-violet-500/10 transition-all duration-300"
           >
             {/* Icon */}

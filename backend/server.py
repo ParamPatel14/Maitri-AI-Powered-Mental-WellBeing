@@ -10,9 +10,11 @@ Startup
 
 Endpoints
 ─────────
-    GET  /health    — liveness probe
-    GET  /registry  — list of available exercises
-    WS   /ws        — real-time analysis stream
+    GET  /health          — liveness probe
+    GET  /registry        — list of available exercises
+    GET  /physical        — physical wellness info (exercises, modes)
+    GET  /psychological   — psychological wellness info (features, status)
+    WS   /ws              — real-time analysis stream
 
 WebSocket protocol  (client → server, JSON strings)
 ────────────────────────────────────────────────────
@@ -64,6 +66,60 @@ async def health():
 @app.get("/registry")
 async def registry():
     return {"exercises": list(EXERCISE_REGISTRY.keys())}
+
+
+# ── Physical wellness endpoint ────────────────────────────────────────────────
+@app.get("/physical")
+async def physical():
+    """
+    Return available physical wellness exercises and goal modes.
+    The frontend can use this to populate the physical wellness screen.
+    """
+    return {
+        "mode": "physical",
+        "exercises": list(EXERCISE_REGISTRY.keys()),
+        "goal_modes": ["Rehab", "Strength", "Endurance"],
+        "description": "AI-guided exercise rehabilitation with real-time pose analysis and form correction.",
+    }
+
+
+# ── Psychological wellness endpoint ──────────────────────────────────────────
+@app.get("/psychological")
+async def psychological():
+    """
+    Return psychological wellness features and their status.
+    """
+    return {
+        "mode": "psychological",
+        "status": "coming_soon",
+        "features": [
+            {
+                "id": "guided_breathing",
+                "title": "Guided Breathing",
+                "description": "Interactive breathing exercises with real-time pacing and calming visual cues.",
+                "status": "coming_soon",
+            },
+            {
+                "id": "mood_tracker",
+                "title": "Mood Tracker",
+                "description": "Log your daily mood and emotional state. Track patterns over time with AI insights.",
+                "status": "coming_soon",
+            },
+            {
+                "id": "journaling",
+                "title": "Journaling",
+                "description": "Structured journaling prompts based on CBT principles for emotional processing.",
+                "status": "coming_soon",
+            },
+            {
+                "id": "progress_analytics",
+                "title": "Progress Analytics",
+                "description": "Visualise your mental wellness journey with weekly and monthly trend charts.",
+                "status": "coming_soon",
+            },
+        ],
+        "description": "Guided mental wellness exercises, mood tracking, and cognitive behavioural techniques powered by AI.",
+    }
 
 
 # ── Rehab recommendation endpoint ─────────────────────────────────────────────
