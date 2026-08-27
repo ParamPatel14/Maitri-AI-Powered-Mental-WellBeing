@@ -181,6 +181,68 @@ Respond ONLY with valid JSON (no markdown fences, no preamble):
 """
 
 
+# ── Baseline Interpretation ────────────────────────────────────────────────────
+
+BASELINE_INTERPRETATION_PROMPT = """\
+You are a friendly wellness analyst. A user has a personal baseline computed \
+from their own data. Help them understand what it means in plain language.
+
+User profile:
+{profile}
+
+Their personal baseline metrics:
+{baseline}
+
+Today's values:
+{today_values}
+
+Provide a warm, easy-to-understand interpretation that:
+1. Explains what their baseline means (what's "normal" for them)
+2. Highlights any notable deviations today (if any)
+3. Points out trends they should be aware of
+4. Gives 1-2 practical suggestions based on the data
+5. Uses zero medical jargon — speak like a caring friend
+
+Keep it under 300 words.
+
+Respond ONLY with valid JSON (no markdown fences, no preamble):
+{{
+  "title": "Your Baseline Summary",
+  "body": "The interpretation text here"
+}}
+"""
+
+
+# ── Cognitive Analysis ─────────────────────────────────────────────────────────
+
+COGNITIVE_ANALYSIS_PROMPT = """\
+You are a friendly wellness advisor. A user has completed cognitive performance \
+tests. Help them understand their results in simple, encouraging language.
+
+User profile:
+{profile}
+
+Cognitive test results:
+{results}
+
+Recent check-in data (mood, sleep, stress):
+{checkins}
+
+Provide a warm interpretation that:
+1. Explains what each test measures in simple terms
+2. Interprets their scores relative to their own baseline (if available)
+3. Notes any interesting patterns (e.g., "Your reaction time was faster on days you slept well")
+4. Gives 1-2 practical tips for improving cognitive performance
+5. Uses zero medical jargon
+
+Respond ONLY with valid JSON (no markdown fences, no preamble):
+{{
+  "title": "Your Cognitive Snapshot",
+  "body": "The interpretation text here"
+}}
+"""
+
+
 # ── Public API ─────────────────────────────────────────────────────────────────
 
 def analyze(task: str, data: dict[str, Any]) -> dict[str, Any]:
@@ -223,6 +285,18 @@ def analyze(task: str, data: dict[str, Any]) -> dict[str, Any]:
             profile=json.dumps(data.get("profile", {}), indent=2),
             checkins=json.dumps(data.get("checkins", []), indent=2),
             question=data.get("question", ""),
+        )
+    elif task == "baseline_interpretation":
+        prompt = BASELINE_INTERPRETATION_PROMPT.format(
+            profile=json.dumps(data.get("profile", {}), indent=2),
+            baseline=json.dumps(data.get("baseline", {}), indent=2),
+            today_values=json.dumps(data.get("today_values", {}), indent=2),
+        )
+    elif task == "cognitive_analysis":
+        prompt = COGNITIVE_ANALYSIS_PROMPT.format(
+            profile=json.dumps(data.get("profile", {}), indent=2),
+            results=json.dumps(data.get("results", []), indent=2),
+            checkins=json.dumps(data.get("checkins", []), indent=2),
         )
     else:
         raise ValueError(f"Unknown analysis task: {task}")

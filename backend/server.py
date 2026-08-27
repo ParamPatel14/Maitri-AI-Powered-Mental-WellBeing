@@ -168,6 +168,9 @@ class HealthLabAnalyzeRequest(BaseModel):
     experiments: list = []
     experiment: dict = {}
     question: str | None = None
+    baseline: dict = {}
+    today_values: dict = {}
+    results: list = []
 
 
 @app.post("/health-lab/analyze")
@@ -176,7 +179,10 @@ async def health_lab_analyze_endpoint(request: HealthLabAnalyzeRequest):
     General-purpose AI analysis endpoint for the Health Lab.
     The 'task' field routes to the appropriate Gemini prompt.
     """
-    valid_tasks = {'weekly_report', 'pattern_finder', 'experiment_analysis', 'what_if'}
+    valid_tasks = {
+        'weekly_report', 'pattern_finder', 'experiment_analysis', 'what_if',
+        'baseline_interpretation', 'cognitive_analysis',
+    }
     if request.task not in valid_tasks:
         raise HTTPException(status_code=400, detail=f"Unknown task: {request.task}")
 
@@ -187,6 +193,9 @@ async def health_lab_analyze_endpoint(request: HealthLabAnalyzeRequest):
         "experiments": request.experiments,
         "experiment": request.experiment,
         "question": request.question,
+        "baseline": request.baseline,
+        "today_values": request.today_values,
+        "results": request.results,
     }
 
     loop = asyncio.get_event_loop()

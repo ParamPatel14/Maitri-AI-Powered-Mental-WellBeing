@@ -6,6 +6,8 @@ import type {
   Experiment,
   ExperimentResult,
   WhatIfScenario,
+  PersonalBaseline,
+  CognitiveTestResult,
 } from '../types/health-lab';
 
 const RAW_BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:8000';
@@ -95,4 +97,30 @@ export async function getWhatIfAnswer(
     answer: result.answer,
     generatedAt: new Date().toISOString(),
   };
+}
+
+export async function interpretBaseline(
+  profile: UserProfile,
+  baseline: PersonalBaseline,
+  todayValues: Record<string, number | null>,
+): Promise<{ title: string; body: string }> {
+  const result = await callAnalyze('baseline_interpretation', {
+    profile,
+    baseline,
+    today_values: todayValues,
+  }) as { title: string; body: string };
+  return result;
+}
+
+export async function analyzeCognitive(
+  profile: UserProfile,
+  results: CognitiveTestResult[],
+  checkins: DailyCheckin[],
+): Promise<{ title: string; body: string }> {
+  const result = await callAnalyze('cognitive_analysis', {
+    profile,
+    results,
+    checkins,
+  }) as { title: string; body: string };
+  return result;
 }

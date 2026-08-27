@@ -13,6 +13,10 @@ import { InsightsPage } from './components/health-lab/insights/InsightsPage';
 import { ExperimentsPage } from './components/health-lab/experiments/ExperimentsPage';
 import { WhatIfPage } from './components/health-lab/whatif/WhatIfPage';
 import { ProfilePage } from './components/health-lab/profile/ProfilePage';
+import { BaselinePage } from './components/health-lab/baseline/BaselinePage';
+import { CognitiveTestPage } from './components/health-lab/cognitive/CognitiveTestPage';
+import { DataSourcesPage } from './components/health-lab/datasources/DataSourcesPage';
+import { ConversationalCheckin } from './components/health-lab/checkin/ConversationalCheckin';
 
 const AppContent: React.FC = () => {
   const { isConnected, currentExercise } = useMaitriStream();
@@ -29,7 +33,11 @@ const AppContent: React.FC = () => {
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="checkin" element={<CheckinPage />} />
+        <Route path="chat" element={<ConversationalCheckin />} />
         <Route path="habits" element={<HabitsPage />} />
+        <Route path="baseline" element={<BaselinePage />} />
+        <Route path="cognitive" element={<CognitiveTestPage />} />
+        <Route path="datasources" element={<DataSourcesPage />} />
         <Route path="insights" element={<InsightsPage />} />
         <Route path="experiments" element={<ExperimentsPage />} />
         <Route path="what-if" element={<WhatIfPage />} />

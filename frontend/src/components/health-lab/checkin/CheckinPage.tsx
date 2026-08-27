@@ -4,10 +4,14 @@ import { useHealthLab } from '../../../context/HealthLabContext';
 import { SectionHeader } from '../shared/GlassCard';
 import { ScaleOptions } from '../shared/ScaleOptions';
 import { today, formatDisplayDate } from '../../../lib/date-utils';
-import type { DailyCheckin } from '../../../types/health-lab';
+import { saveLifestyleEntry } from '../../../lib/data-collection';
+import type { DailyCheckin, LifestyleEntry } from '../../../types/health-lab';
 import {
   MOOD_EMOJIS, MOOD_LABELS, ENERGY_LABELS, SLEEP_LABELS, STRESS_LABELS,
   WENT_WELL_OPTIONS, WAS_HARD_OPTIONS,
+  CAFFEINE_OPTIONS, CAFFEINE_LABELS,
+  WATER_INTAKE, WATER_INTAKE_LABELS,
+  SCREEN_BEFORE_BED, SCREEN_BEFORE_BED_LABELS,
 } from '../../../types/health-lab';
 
 export const CheckinPage: React.FC = () => {
@@ -18,6 +22,9 @@ export const CheckinPage: React.FC = () => {
   const [stressLevel, setStressLevel] = useState<number | null>(todaysCheckin?.stressLevel ?? null);
   const [wentWell, setWentWell] = useState<string | null>(todaysCheckin?.wentWell ?? null);
   const [wasHard, setWasHard] = useState<string | null>(todaysCheckin?.wasHard ?? null);
+  const [caffeine, setCaffeine] = useState<LifestyleEntry['caffeineIntake']>('none');
+  const [water, setWater] = useState<LifestyleEntry['waterIntake']>('moderate');
+  const [screenTime, setScreenTime] = useState<LifestyleEntry['screenTimeBeforeBed']>('none');
   const [saved, setSaved] = useState(false);
 
   const canSave = mood !== null && energy !== null && sleepQuality !== null && stressLevel !== null;
@@ -35,6 +42,22 @@ export const CheckinPage: React.FC = () => {
       completedAt: new Date().toISOString(),
     };
     saveCheckin(checkin);
+
+    // Also save lifestyle entry
+    const lifestyle: LifestyleEntry = {
+      date: today(),
+      caffeineIntake: caffeine,
+      alcoholIntake: 'none',
+      mealRegularity: 'mostly_regular',
+      waterIntake: water,
+      outdoorTime: 'none',
+      socialInteraction: 'moderate',
+      screenTimeBeforeBed: screenTime,
+      WorkHours: 'moderate',
+      completedAt: new Date().toISOString(),
+    };
+    saveLifestyleEntry(lifestyle);
+
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
@@ -97,6 +120,68 @@ export const CheckinPage: React.FC = () => {
             <option value="">Skip</option>
             {WAS_HARD_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
           </select>
+        </div>
+
+        {/* Lifestyle quick-log */}
+        <div className="bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm">
+          <label className="block text-sm font-semibold text-zinc-700 mb-3">Quick lifestyle check</label>
+          <p className="text-xs text-zinc-400 mb-4">Helps us understand your daily patterns</p>
+          <div className="space-y-3">
+            <div>
+              <label className="text-xs text-zinc-500 mb-1 block">Caffeine today</label>
+              <div className="flex gap-1.5">
+                {CAFFEINE_LABELS.map((label, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setCaffeine(CAFFEINE_OPTIONS[i])}
+                    className={`flex-1 py-2 rounded-lg border text-xs font-medium transition-all ${
+                      caffeine === CAFFEINE_OPTIONS[i]
+                        ? 'bg-violet-50 border-violet-400 text-violet-700'
+                        : 'bg-white border-zinc-200 text-zinc-500 hover:border-zinc-300'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="text-xs text-zinc-500 mb-1 block">Water intake</label>
+              <div className="flex gap-1.5">
+                {WATER_INTAKE_LABELS.map((label, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setWater(WATER_INTAKE[i])}
+                    className={`flex-1 py-2 rounded-lg border text-xs font-medium transition-all ${
+                      water === WATER_INTAKE[i]
+                        ? 'bg-violet-50 border-violet-400 text-violet-700'
+                        : 'bg-white border-zinc-200 text-zinc-500 hover:border-zinc-300'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="text-xs text-zinc-500 mb-1 block">Screen time before bed</label>
+              <div className="flex gap-1.5">
+                {SCREEN_BEFORE_BED_LABELS.map((label, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setScreenTime(SCREEN_BEFORE_BED[i])}
+                    className={`flex-1 py-2 rounded-lg border text-xs font-medium transition-all ${
+                      screenTime === SCREEN_BEFORE_BED[i]
+                        ? 'bg-violet-50 border-violet-400 text-violet-700'
+                        : 'bg-white border-zinc-200 text-zinc-500 hover:border-zinc-300'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Save button */}

@@ -17,7 +17,7 @@ import type {
   BaselineMetric,
   BaselineConfig,
 } from '../types/health-lab';
-import { today, subtractDays, getLastNDays } from './date-utils';
+import { today, getLastNDays } from './date-utils';
 
 const DEFAULT_CONFIG: BaselineConfig = {
   minDaysForBaseline: 5,

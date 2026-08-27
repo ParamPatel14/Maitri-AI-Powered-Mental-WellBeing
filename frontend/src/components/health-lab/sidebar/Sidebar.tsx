@@ -3,20 +3,33 @@ import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard,
   CalendarCheck,
+  MessageCircle,
   CheckSquare,
+  Target,
+  Database,
+  Brain,
   Sparkles,
   FlaskConical,
   HelpCircle,
   User,
-  Brain,
   ArrowLeft,
 } from 'lucide-react';
 
-const NAV_ITEMS = [
+const PRIMARY_NAV = [
   { to: '/health-lab/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/health-lab/checkin', icon: CalendarCheck, label: 'Daily Check-in' },
+  { to: '/health-lab/checkin', icon: CalendarCheck, label: 'Quick Check-in' },
+  { to: '/health-lab/chat', icon: MessageCircle, label: 'AI Check-in' },
   { to: '/health-lab/habits', icon: CheckSquare, label: 'Habits' },
+];
+
+const INSIGHTS_NAV = [
+  { to: '/health-lab/baseline', icon: Target, label: 'My Baseline' },
+  { to: '/health-lab/cognitive', icon: Brain, label: 'Cognitive Tests' },
+  { to: '/health-lab/datasources', icon: Database, label: 'Data Sources' },
   { to: '/health-lab/insights', icon: Sparkles, label: 'AI Insights' },
+];
+
+const EXPLORE_NAV = [
   { to: '/health-lab/experiments', icon: FlaskConical, label: 'Experiments' },
   { to: '/health-lab/what-if', icon: HelpCircle, label: 'What-If' },
 ];
@@ -45,23 +58,66 @@ export const Sidebar: React.FC = () => {
       </div>
 
       {/* Nav links */}
-      <nav className="flex-1 p-3 space-y-1">
-        {NAV_ITEMS.map(({ to, icon: Icon, label }) => (
-          <NavLink
-            key={to}
-            to={to}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ${
-                isActive
-                  ? 'bg-violet-50 text-violet-700 border border-violet-200'
-                  : 'text-zinc-500 hover:text-zinc-800 hover:bg-zinc-50'
-              }`
-            }
-          >
-            <Icon className="w-4.5 h-4.5" />
-            {label}
-          </NavLink>
-        ))}
+      <nav className="flex-1 p-3 space-y-4 overflow-y-auto">
+        <div>
+          <div className="px-3 mb-1 text-[10px] text-zinc-400 uppercase tracking-wider font-semibold">Daily</div>
+          {PRIMARY_NAV.map(({ to, icon: Icon, label }) => (
+            <NavLink
+              key={to}
+              to={to}
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-150 ${
+                  isActive
+                    ? 'bg-violet-50 text-violet-700 border border-violet-200'
+                    : 'text-zinc-500 hover:text-zinc-800 hover:bg-zinc-50'
+                }`
+              }
+            >
+              <Icon className="w-4 h-4" />
+              {label}
+            </NavLink>
+          ))}
+        </div>
+
+        <div>
+          <div className="px-3 mb-1 text-[10px] text-zinc-400 uppercase tracking-wider font-semibold">Understand</div>
+          {INSIGHTS_NAV.map(({ to, icon: Icon, label }) => (
+            <NavLink
+              key={to}
+              to={to}
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-150 ${
+                  isActive
+                    ? 'bg-violet-50 text-violet-700 border border-violet-200'
+                    : 'text-zinc-500 hover:text-zinc-800 hover:bg-zinc-50'
+                }`
+              }
+            >
+              <Icon className="w-4 h-4" />
+              {label}
+            </NavLink>
+          ))}
+        </div>
+
+        <div>
+          <div className="px-3 mb-1 text-[10px] text-zinc-400 uppercase tracking-wider font-semibold">Explore</div>
+          {EXPLORE_NAV.map(({ to, icon: Icon, label }) => (
+            <NavLink
+              key={to}
+              to={to}
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-150 ${
+                  isActive
+                    ? 'bg-violet-50 text-violet-700 border border-violet-200'
+                    : 'text-zinc-500 hover:text-zinc-800 hover:bg-zinc-50'
+                }`
+              }
+            >
+              <Icon className="w-4 h-4" />
+              {label}
+            </NavLink>
+          ))}
+        </div>
       </nav>
 
       {/* Footer */}

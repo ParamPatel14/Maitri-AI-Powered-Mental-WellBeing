@@ -10,6 +10,13 @@ import type {
   AIInsight,
   Experiment,
   WhatIfScenario,
+  WearableData,
+  LifestyleEntry,
+  CognitiveTestResult,
+  ConversationEntry,
+  PostureSnapshot,
+  PersonalBaseline,
+  DataSourceConfig,
 } from '../types/health-lab';
 import * as storage from '../lib/storage';
 import { today, getStreak } from '../lib/date-utils';
@@ -22,6 +29,13 @@ interface HealthLabState {
   insights: AIInsight[];
   experiments: Experiment[];
   whatIfScenarios: WhatIfScenario[];
+  wearables: WearableData[];
+  lifestyles: LifestyleEntry[];
+  cognitives: CognitiveTestResult[];
+  conversations: ConversationEntry[];
+  postureSnapshots: PostureSnapshot[];
+  baseline: PersonalBaseline | null;
+  dataSources: DataSourceConfig[];
   todaysCheckin: DailyCheckin | null;
   todaysHabitLog: HabitLog | null;
   streak: number;
@@ -36,6 +50,13 @@ interface HealthLabState {
   saveInsight: (insight: AIInsight) => void;
   saveExperiment: (exp: Experiment) => void;
   saveWhatIfScenario: (scenario: WhatIfScenario) => void;
+  saveWearableData: (data: WearableData) => void;
+  saveLifestyleEntry: (entry: LifestyleEntry) => void;
+  saveCognitiveTest: (result: CognitiveTestResult) => void;
+  saveConversation: (entry: ConversationEntry) => void;
+  savePostureSnapshot: (snapshot: PostureSnapshot) => void;
+  saveBaseline: (baseline: PersonalBaseline) => void;
+  saveDataSource: (source: DataSourceConfig) => void;
   refreshData: () => void;
   resetAll: () => void;
 }
@@ -50,6 +71,13 @@ export const HealthLabProvider: React.FC<{ children: ReactNode }> = ({ children 
   const [insights, setInsights] = useState<AIInsight[]>(() => storage.getInsights());
   const [experiments, setExperiments] = useState<Experiment[]>(() => storage.getExperiments());
   const [whatIfScenarios, setWhatIfScenarios] = useState<WhatIfScenario[]>(() => storage.getWhatIfScenarios());
+  const [wearables, setWearables] = useState<WearableData[]>(() => storage.getWearableData());
+  const [lifestyles, setLifestyles] = useState<LifestyleEntry[]>(() => storage.getLifestyleEntries());
+  const [cognitives, setCognitives] = useState<CognitiveTestResult[]>(() => storage.getCognitiveTests());
+  const [conversations, setConversations] = useState<ConversationEntry[]>(() => storage.getConversations());
+  const [postureSnapshots, setPostureSnapshots] = useState<PostureSnapshot[]>(() => storage.getPostureSnapshots());
+  const [baseline, setBaseline] = useState<PersonalBaseline | null>(() => storage.getBaseline());
+  const [dataSources, setDataSources] = useState<DataSourceConfig[]>(() => storage.getDataSources());
 
   const refreshData = useCallback(() => {
     setProfile(storage.getProfile());
@@ -58,6 +86,13 @@ export const HealthLabProvider: React.FC<{ children: ReactNode }> = ({ children 
     setInsights(storage.getInsights());
     setExperiments(storage.getExperiments());
     setWhatIfScenarios(storage.getWhatIfScenarios());
+    setWearables(storage.getWearableData());
+    setLifestyles(storage.getLifestyleEntries());
+    setCognitives(storage.getCognitiveTests());
+    setConversations(storage.getConversations());
+    setPostureSnapshots(storage.getPostureSnapshots());
+    setBaseline(storage.getBaseline());
+    setDataSources(storage.getDataSources());
   }, []);
 
   const saveProfile = useCallback((p: UserProfile) => {
@@ -120,6 +155,41 @@ export const HealthLabProvider: React.FC<{ children: ReactNode }> = ({ children 
     setWhatIfScenarios(storage.getWhatIfScenarios());
   }, []);
 
+  const saveWearableData_ = useCallback((data: WearableData) => {
+    storage.saveWearableData(data);
+    setWearables(storage.getWearableData());
+  }, []);
+
+  const saveLifestyleEntry_ = useCallback((entry: LifestyleEntry) => {
+    storage.saveLifestyleEntry(entry);
+    setLifestyles(storage.getLifestyleEntries());
+  }, []);
+
+  const saveCognitiveTest_ = useCallback((result: CognitiveTestResult) => {
+    storage.saveCognitiveTest(result);
+    setCognitives(storage.getCognitiveTests());
+  }, []);
+
+  const saveConversation_ = useCallback((entry: ConversationEntry) => {
+    storage.saveConversation(entry);
+    setConversations(storage.getConversations());
+  }, []);
+
+  const savePostureSnapshot_ = useCallback((snapshot: PostureSnapshot) => {
+    storage.savePostureSnapshot(snapshot);
+    setPostureSnapshots(storage.getPostureSnapshots());
+  }, []);
+
+  const saveBaseline_ = useCallback((b: PersonalBaseline) => {
+    storage.saveBaseline(b);
+    setBaseline(storage.getBaseline());
+  }, []);
+
+  const saveDataSource_ = useCallback((source: DataSourceConfig) => {
+    storage.saveDataSource(source);
+    setDataSources(storage.getDataSources());
+  }, []);
+
   const resetAll = useCallback(() => {
     storage.resetAllData();
     refreshData();
@@ -132,10 +202,19 @@ export const HealthLabProvider: React.FC<{ children: ReactNode }> = ({ children 
   return (
     <HealthLabContext.Provider value={{
       profile, checkins, habitLogs, insights, experiments, whatIfScenarios,
+      wearables, lifestyles, cognitives, conversations, postureSnapshots,
+      baseline, dataSources,
       todaysCheckin, todaysHabitLog, streak,
       saveProfile, completeOnboarding, saveCheckin, saveHabitLog,
       toggleHabit, addTrackedHabit, removeTrackedHabit,
       saveInsight, saveExperiment, saveWhatIfScenario,
+      saveWearableData: saveWearableData_,
+      saveLifestyleEntry: saveLifestyleEntry_,
+      saveCognitiveTest: saveCognitiveTest_,
+      saveConversation: saveConversation_,
+      savePostureSnapshot: savePostureSnapshot_,
+      saveBaseline: saveBaseline_,
+      saveDataSource: saveDataSource_,
       refreshData, resetAll,
     }}>
       {children}
