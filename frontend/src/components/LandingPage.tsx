@@ -60,7 +60,7 @@ export const LandingPage: React.FC = () => {
 
           {/* Psychological Wellness Card */}
           <button
-            onClick={() => navigate('/psychological')}
+            onClick={() => navigate('/health-lab')}
             className="group relative text-left p-8 rounded-3xl border border-violet-200 bg-white hover:border-violet-400 hover:shadow-lg hover:shadow-violet-500/10 transition-all duration-300"
           >
             {/* Icon */}
@@ -70,12 +70,12 @@ export const LandingPage: React.FC = () => {
 
             <h2 className="text-2xl font-bold mb-3">Psychological Wellness</h2>
             <p className="text-zinc-500 text-sm leading-relaxed mb-6">
-              Guided mental wellness exercises, mood tracking, and cognitive behavioural techniques powered by AI.
+              Your personal wellness laboratory. Track habits, discover patterns, run experiments, and understand what makes you feel better.
             </p>
 
             {/* Feature list */}
             <ul className="space-y-2 mb-8">
-              {['Guided meditation & breathing', 'Mood tracking & journaling', 'CBT-based exercises', 'Stress management tools'].map((f) => (
+              {['Daily mood & energy tracking', 'Habit pattern analysis', 'Personal wellness experiments', 'AI-powered insights & predictions'].map((f) => (
                 <li key={f} className="flex items-center gap-2 text-sm text-zinc-600">
                   <div className="w-1.5 h-1.5 rounded-full bg-violet-400" />
                   {f}
@@ -84,7 +84,7 @@ export const LandingPage: React.FC = () => {
             </ul>
 
             <div className="flex items-center gap-2 text-violet-600 font-semibold text-sm group-hover:gap-3 transition-all duration-300">
-              Coming Soon <ArrowRight className="w-4 h-4" />
+              Get Started <ArrowRight className="w-4 h-4" />
             </div>
           </button>
         </div>

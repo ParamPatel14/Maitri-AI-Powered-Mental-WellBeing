@@ -40,6 +40,7 @@ from pydantic import BaseModel
 from exercises        import EXERCISE_REGISTRY
 from backend.pipeline import process_frame, CalibrationState
 from backend.rehab    import get_recommendations
+from backend.health_lab import analyze as health_lab_analyze
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("maitri.server")
@@ -156,6 +157,52 @@ async def recommend(request: RecommendRequest):
             )
         logger.error(f"/recommend error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Recommendation failed: {str(e)}")
+
+
+# ── Health Lab analysis endpoint ───────────────────────────────────────────────
+class HealthLabAnalyzeRequest(BaseModel):
+    task: str
+    profile: dict = {}
+    checkins: list = []
+    habit_logs: list = []
+    experiments: list = []
+    experiment: dict = {}
+    question: str | None = None
+
+
+@app.post("/health-lab/analyze")
+async def health_lab_analyze_endpoint(request: HealthLabAnalyzeRequest):
+    """
+    General-purpose AI analysis endpoint for the Health Lab.
+    The 'task' field routes to the appropriate Gemini prompt.
+    """
+    valid_tasks = {'weekly_report', 'pattern_finder', 'experiment_analysis', 'what_if'}
+    if request.task not in valid_tasks:
+        raise HTTPException(status_code=400, detail=f"Unknown task: {request.task}")
+
+    data = {
+        "profile": request.profile,
+        "checkins": request.checkins,
+        "habit_logs": request.habit_logs,
+        "experiments": request.experiments,
+        "experiment": request.experiment,
+        "question": request.question,
+    }
+
+    loop = asyncio.get_event_loop()
+    try:
+        result = await loop.run_in_executor(None, health_lab_analyze, request.task, data)
+        return {"result": result}
+    except ValueError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except json.JSONDecodeError:
+        raise HTTPException(
+            status_code=502,
+            detail="AI returned an unexpected format. Please try again."
+        )
+    except Exception as e:
+        logger.error(f"/health-lab/analyze error: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
 
 
 # ── WebSocket endpoint ─────────────────────────────────────────────────────────
