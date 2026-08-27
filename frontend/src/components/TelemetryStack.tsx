@@ -53,47 +53,47 @@ export const TelemetryStack: React.FC = () => {
   }, [frame]);
 
   const MetricGauge = ({ label, value, unit = "°" }: { label: string, value: number | undefined, unit?: string }) => (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 flex flex-col items-center justify-center">
-      <span className="text-zinc-400 text-xs uppercase tracking-wider font-semibold mb-1">{label}</span>
-      <span className="text-2xl font-mono font-bold text-zinc-100">
-        {value !== undefined ? value.toFixed(1) : '--'}<span className="text-zinc-500 text-lg ml-1">{unit}</span>
+    <div className="bg-white border border-zinc-200 rounded-xl p-4 flex flex-col items-center justify-center shadow-sm">
+      <span className="text-zinc-500 text-xs uppercase tracking-wider font-semibold mb-1">{label}</span>
+      <span className="text-2xl font-mono font-bold text-zinc-800">
+        {value !== undefined ? value.toFixed(1) : '--'}<span className="text-zinc-400 text-lg ml-1">{unit}</span>
       </span>
     </div>
   );
 
   return (
-    <div className="h-full flex flex-col p-4 pl-0 gap-4 text-zinc-50">
+    <div className="h-full flex flex-col p-4 pl-0 gap-4 text-zinc-950">
       
       {/* Top Section: Reps & Phase */}
       <div className="flex gap-4 h-40">
-        <div className="flex-1 bg-zinc-900 border border-zinc-800 rounded-2xl flex flex-col items-center justify-center relative overflow-hidden">
-          <div className="absolute top-4 left-4 flex items-center gap-2 text-zinc-400">
+        <div className="flex-1 bg-white border border-zinc-200 rounded-2xl flex flex-col items-center justify-center relative overflow-hidden shadow-sm">
+          <div className="absolute top-4 left-4 flex items-center gap-2 text-zinc-500">
             <Activity className="w-4 h-4" />
             <span className="text-xs uppercase tracking-wider font-semibold">Rep Count</span>
           </div>
           <div className={cn(
             "text-7xl font-black font-mono tracking-tighter transition-transform duration-200",
-            pop ? "scale-110 text-emerald-400" : "scale-100 text-zinc-100"
+            pop ? "scale-110 text-emerald-600" : "scale-100 text-zinc-800"
           )}>
             {result?.rep_count ?? 0}
           </div>
         </div>
 
-        <div className="w-48 bg-zinc-900 border border-zinc-800 rounded-2xl p-4 flex flex-col">
-          <span className="text-zinc-400 text-xs uppercase tracking-wider font-semibold mb-4">Phase</span>
+        <div className="w-48 bg-white border border-zinc-200 rounded-2xl p-4 flex flex-col shadow-sm">
+          <span className="text-zinc-500 text-xs uppercase tracking-wider font-semibold mb-4">Phase</span>
           <div className="flex-1 flex flex-col justify-between relative">
-            <div className="absolute left-[7px] top-2 bottom-2 w-0.5 bg-zinc-800"></div>
+            <div className="absolute left-[7px] top-2 bottom-2 w-0.5 bg-zinc-200"></div>
             {['standing', 'descending', 'bottom', 'ascending'].map((p) => {
               const isActive = metrics?.phase === p;
               return (
                 <div key={p} className="flex items-center gap-3 relative z-10">
                   <div className={cn(
                     "w-4 h-4 rounded-full border-4 transition-colors duration-200",
-                    isActive ? "border-emerald-500 bg-zinc-900" : "border-zinc-700 bg-zinc-900"
+                    isActive ? "border-emerald-500 bg-white" : "border-zinc-300 bg-white"
                   )}></div>
                   <span className={cn(
                     "text-sm font-medium capitalize transition-colors duration-200",
-                    isActive ? "text-emerald-400" : "text-zinc-500"
+                    isActive ? "text-emerald-600" : "text-zinc-400"
                   )}>{p}</span>
                 </div>
               );
@@ -113,18 +113,18 @@ export const TelemetryStack: React.FC = () => {
       </div>
 
       {/* Bottom Section: Trend Analytics */}
-      <div className="flex-1 bg-zinc-900 border border-zinc-800 rounded-2xl p-4 flex flex-col min-h-[200px]">
+      <div className="flex-1 bg-white border border-zinc-200 rounded-2xl p-4 flex flex-col min-h-[200px] shadow-sm">
          <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2 text-zinc-400">
+          <div className="flex items-center gap-2 text-zinc-500">
             <Gauge className="w-4 h-4" />
             <span className="text-xs uppercase tracking-wider font-semibold">Live Trajectory (10s)</span>
           </div>
           <div className="flex gap-4 text-xs font-medium">
-            <div className="flex items-center gap-1.5 text-emerald-400">
-              <div className="w-2 h-2 rounded-full bg-emerald-400"></div> L Knee
+            <div className="flex items-center gap-1.5 text-emerald-600">
+              <div className="w-2 h-2 rounded-full bg-emerald-500"></div> L Knee
             </div>
-            <div className="flex items-center gap-1.5 text-blue-400">
-              <div className="w-2 h-2 rounded-full bg-blue-400"></div> R Knee
+            <div className="flex items-center gap-1.5 text-blue-600">
+              <div className="w-2 h-2 rounded-full bg-blue-500"></div> R Knee
             </div>
           </div>
         </div>
@@ -134,15 +134,15 @@ export const TelemetryStack: React.FC = () => {
               <XAxis dataKey="time" hide />
               <YAxis domain={['auto', 'auto']} hide />
               <Tooltip 
-                contentStyle={{ backgroundColor: '#18181b', border: '1px solid #27272a', borderRadius: '0.5rem', color: '#f4f4f5' }}
-                itemStyle={{ color: '#f4f4f5' }}
+                contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e4e4e7', borderRadius: '0.75rem', color: '#18181b', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}
+                itemStyle={{ color: '#18181b' }}
                 labelStyle={{ display: 'none' }}
                 isAnimationActive={false}
               />
               <Line 
                 type="monotone" 
                 dataKey="leftKnee" 
-                stroke="#34d399" 
+                stroke="#10b981" 
                 strokeWidth={2} 
                 dot={false}
                 isAnimationActive={false} 
@@ -150,7 +150,7 @@ export const TelemetryStack: React.FC = () => {
               <Line 
                 type="monotone" 
                 dataKey="rightKnee" 
-                stroke="#60a5fa" 
+                stroke="#3b82f6" 
                 strokeWidth={2} 
                 dot={false} 
                 isAnimationActive={false}

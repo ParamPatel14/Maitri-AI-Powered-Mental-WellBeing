@@ -125,7 +125,7 @@ export const PerformanceHUD: React.FC = () => {
       ctx.stroke();
 
       // Draw joints
-      ctx.fillStyle = '#ffffff';
+      ctx.fillStyle = '#18181b';
       Object.values(landmarks).forEach((pt: Point3D) => {
         ctx.beginPath();
         ctx.arc(pt.x * width, pt.y * height, 5, 0, 2 * Math.PI);
@@ -160,7 +160,7 @@ export const PerformanceHUD: React.FC = () => {
           "relative flex-1 rounded-2xl overflow-hidden border-2 transition-all duration-300 shadow-[0_0_50px_-12px]",
           hasIssue
             ? "border-red-500 shadow-red-500/50 animate-pulse"
-            : "border-zinc-800 shadow-emerald-500/10"
+            : "border-zinc-200 shadow-emerald-500/10"
         )}
       >
         <video
@@ -176,11 +176,11 @@ export const PerformanceHUD: React.FC = () => {
         />
 
         <div className="absolute top-4 left-4 z-10 flex items-center gap-3">
-          <div className="px-3 py-1.5 rounded-full border border-zinc-800 bg-zinc-950/60 backdrop-blur-md text-xs font-semibold text-zinc-200">
+          <div className="px-3 py-1.5 rounded-full border border-zinc-200 bg-white/80 backdrop-blur-md text-xs font-semibold text-zinc-700">
             Pose: {poseQuality !== undefined ? `${Math.round(poseQuality * 100)}%` : '--'}
           </div>
           {frame?.pose?.camera_view && frame.pose.camera_view !== 'none' && (
-            <div className="px-3 py-1.5 rounded-full border border-zinc-800 bg-zinc-950/60 backdrop-blur-md text-xs font-semibold text-zinc-200">
+            <div className="px-3 py-1.5 rounded-full border border-zinc-200 bg-white/80 backdrop-blur-md text-xs font-semibold text-zinc-700">
               View: {frame.pose.camera_view}
             </div>
           )}
@@ -188,9 +188,9 @@ export const PerformanceHUD: React.FC = () => {
 
         {frame?.calibration?.state === 'running' && (
           <div className="absolute top-4 right-4 z-10 w-56">
-            <div className="px-3 py-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 backdrop-blur-md">
-              <div className="text-xs font-semibold text-emerald-200 mb-2">Calibrating</div>
-              <div className="h-2 w-full bg-zinc-800 rounded-full overflow-hidden">
+            <div className="px-3 py-2 rounded-xl border border-emerald-500/30 bg-emerald-50 backdrop-blur-md">
+              <div className="text-xs font-semibold text-emerald-700 mb-2">Calibrating</div>
+              <div className="h-2 w-full bg-zinc-200 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-emerald-500"
                   style={{ width: `${Math.round((frame.calibration.progress || 0) * 100)}%` }}
@@ -202,7 +202,7 @@ export const PerformanceHUD: React.FC = () => {
 
         {onboardingMessage && (
           <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
-            <div className="px-6 py-4 rounded-2xl border border-zinc-800 bg-zinc-950/70 backdrop-blur-md text-zinc-100 font-semibold text-center max-w-md">
+            <div className="px-6 py-4 rounded-2xl border border-zinc-200 bg-white/90 backdrop-blur-md text-zinc-800 font-semibold text-center max-w-md">
               {onboardingMessage}
             </div>
           </div>
@@ -214,8 +214,8 @@ export const PerformanceHUD: React.FC = () => {
             <div className={cn(
               "px-6 py-3 rounded-full backdrop-blur-md border text-center font-medium shadow-2xl transition-all duration-200",
               hasIssue
-                ? "bg-red-500/20 border-red-500/50 text-red-50"
-                : "bg-emerald-500/20 border-emerald-500/50 text-emerald-50"
+                ? "bg-red-100 border-red-300 text-red-700"
+                : "bg-emerald-100 border-emerald-300 text-emerald-700"
             )}>
               {feedback}
             </div>

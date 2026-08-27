@@ -97,17 +97,17 @@ const ExerciseCard: React.FC<{
   rec: RehabRecommendation;
   onOpen: (exercise: string) => void;
 }> = ({ rec, onOpen }) => (
-  <div className="relative flex flex-col gap-4 p-5 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 hover:border-emerald-500/60 hover:bg-emerald-500/10 transition-all duration-200">
+  <div className="relative flex flex-col gap-4 p-5 rounded-2xl border border-emerald-500/30 bg-emerald-50 hover:border-emerald-500/60 hover:bg-emerald-100/60 transition-all duration-200 shadow-sm">
     {/* Exercise name */}
     <div>
-      <h3 className="text-lg font-bold mb-2 text-zinc-50">{rec.exercise}</h3>
-      <p className="text-sm text-zinc-400 leading-relaxed">{rec.reason}</p>
+      <h3 className="text-lg font-bold mb-2 text-zinc-900">{rec.exercise}</h3>
+      <p className="text-sm text-zinc-500 leading-relaxed">{rec.reason}</p>
     </div>
 
     {/* Action — disabled when module not yet implemented, but visually identical */}
     <button
       onClick={() => onOpen(rec.exercise)}
-      className="mt-auto flex items-center justify-center gap-2 w-full bg-emerald-500 hover:bg-emerald-400 active:scale-[0.98] text-zinc-950 font-semibold rounded-xl px-4 py-2.5 text-sm transition-all duration-150 "
+      className="mt-auto flex items-center justify-center gap-2 w-full bg-emerald-500 hover:bg-emerald-600 active:scale-[0.98] text-white font-semibold rounded-xl px-4 py-2.5 text-sm transition-all duration-150 shadow-sm"
     >
       <Play className="w-4 h-4 fill-current" />
       View Tutorial
@@ -117,9 +117,9 @@ const ExerciseCard: React.FC<{
 
 // ── Connecting overlay ─────────────────────────────────────────────────────────
 const ConnectingOverlay: React.FC = () => (
-  <div className="flex h-screen w-full items-center justify-center bg-zinc-950 text-zinc-50">
+  <div className="flex h-screen w-full items-center justify-center bg-zinc-50 text-zinc-950">
     <div className="flex flex-col items-center gap-4">
-      <div className="h-12 w-12 animate-spin rounded-full border-4 border-zinc-800 border-t-emerald-500" />
+      <div className="h-12 w-12 animate-spin rounded-full border-4 border-zinc-200 border-t-emerald-500" />
       <h2 className="text-xl font-medium tracking-wide">Connecting to Maitri Core Service...</h2>
     </div>
   </div>
@@ -151,20 +151,20 @@ export const RehabScreen: React.FC = () => {
   };
 
   const tutorialModal = tutorialFor ? (
-    <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 backdrop-blur-sm px-6">
-      <div className="w-full max-w-2xl rounded-3xl border border-zinc-800 bg-zinc-950 text-zinc-50 shadow-2xl overflow-hidden">
-        <div className="p-6 border-b border-zinc-900">
+    <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/40 backdrop-blur-sm px-6">
+      <div className="w-full max-w-2xl rounded-3xl border border-zinc-200 bg-white text-zinc-950 shadow-2xl overflow-hidden">
+        <div className="p-6 border-b border-zinc-100">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <div className="text-xs text-zinc-500 uppercase tracking-wider font-semibold">Tutorial</div>
+              <div className="text-xs text-zinc-400 uppercase tracking-wider font-semibold">Tutorial</div>
               <div className="text-2xl font-bold">{tutorialFor}</div>
-              <div className="mt-2 text-sm text-zinc-400">
+              <div className="mt-2 text-sm text-zinc-500">
                 {patient?.name ? `Patient: ${patient.name} • ` : ''}Mode: {goalMode}
               </div>
             </div>
             <button
               onClick={() => setTutorialFor(null)}
-              className="px-3 py-2 rounded-xl border border-zinc-800 bg-zinc-900 hover:bg-zinc-800 text-sm font-semibold"
+              className="px-3 py-2 rounded-xl border border-zinc-200 bg-zinc-50 hover:bg-zinc-100 text-sm font-semibold"
             >
               Close
             </button>
@@ -179,28 +179,28 @@ export const RehabScreen: React.FC = () => {
             return (
               <>
                 <div className="md:col-span-1">
-                  <div className="text-xs text-zinc-500 uppercase tracking-wider font-semibold mb-2">Camera</div>
-                  <div className="p-4 rounded-2xl border border-zinc-800 bg-zinc-900/40">
+                  <div className="text-xs text-zinc-400 uppercase tracking-wider font-semibold mb-2">Camera</div>
+                  <div className="p-4 rounded-2xl border border-zinc-200 bg-zinc-50">
                     <div className="text-sm font-semibold">{viewLabel}</div>
-                    <div className="text-xs text-zinc-400 mt-1">We calibrate first to reduce false positives.</div>
+                    <div className="text-xs text-zinc-500 mt-1">We calibrate first to reduce false positives.</div>
                   </div>
                 </div>
                 <div className="md:col-span-2 grid grid-cols-1 gap-4">
-                  <div className="p-4 rounded-2xl border border-zinc-800 bg-zinc-900/40">
-                    <div className="text-xs text-zinc-500 uppercase tracking-wider font-semibold mb-2">Setup</div>
-                    <ul className="text-sm text-zinc-200 space-y-1">
+                  <div className="p-4 rounded-2xl border border-zinc-200 bg-zinc-50">
+                    <div className="text-xs text-zinc-400 uppercase tracking-wider font-semibold mb-2">Setup</div>
+                    <ul className="text-sm text-zinc-700 space-y-1">
                       {t.setup.map((s) => <li key={s}>• {s}</li>)}
                     </ul>
                   </div>
-                  <div className="p-4 rounded-2xl border border-zinc-800 bg-zinc-900/40">
-                    <div className="text-xs text-zinc-500 uppercase tracking-wider font-semibold mb-2">How To</div>
-                    <ul className="text-sm text-zinc-200 space-y-1">
+                  <div className="p-4 rounded-2xl border border-zinc-200 bg-zinc-50">
+                    <div className="text-xs text-zinc-400 uppercase tracking-wider font-semibold mb-2">How To</div>
+                    <ul className="text-sm text-zinc-700 space-y-1">
                       {t.steps.map((s) => <li key={s}>• {s}</li>)}
                     </ul>
                   </div>
-                  <div className="p-4 rounded-2xl border border-zinc-800 bg-zinc-900/40">
-                    <div className="text-xs text-zinc-500 uppercase tracking-wider font-semibold mb-2">Tips</div>
-                    <ul className="text-sm text-zinc-200 space-y-1">
+                  <div className="p-4 rounded-2xl border border-zinc-200 bg-zinc-50">
+                    <div className="text-xs text-zinc-400 uppercase tracking-wider font-semibold mb-2">Tips</div>
+                    <ul className="text-sm text-zinc-700 space-y-1">
                       {t.tips.map((s) => <li key={s}>• {s}</li>)}
                     </ul>
                   </div>
@@ -210,17 +210,17 @@ export const RehabScreen: React.FC = () => {
           })()}
         </div>
 
-        <div className="p-6 border-t border-zinc-900 flex flex-col md:flex-row gap-3 justify-end">
+        <div className="p-6 border-t border-zinc-100 flex flex-col md:flex-row gap-3 justify-end">
           <button
             onClick={() => setTutorialFor(null)}
-            className="px-5 py-3 rounded-xl border border-zinc-800 bg-zinc-900 hover:bg-zinc-800 text-sm font-semibold"
+            className="px-5 py-3 rounded-xl border border-zinc-200 bg-zinc-50 hover:bg-zinc-100 text-sm font-semibold"
           >
             Back
           </button>
           <button
             onClick={() => { if (isAvailable(tutorialFor)) { startSession(tutorialFor); setTutorialFor(null); } }}
             disabled={!isAvailable(tutorialFor)}
-            className="px-6 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 disabled:cursor-not-allowed text-zinc-950 text-sm font-bold"
+            className="px-6 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-bold shadow-sm"
           >
             Start (Calibration First)
           </button>
@@ -260,14 +260,14 @@ export const RehabScreen: React.FC = () => {
     return (
       <>
         {tutorialModal}
-        <div className="flex h-screen w-full flex-col items-center justify-center bg-zinc-950 text-zinc-50 gap-6">
+        <div className="flex h-screen w-full flex-col items-center justify-center bg-zinc-50 text-zinc-950 gap-6">
           <div className="relative">
             <div className="absolute inset-0 bg-emerald-500/20 rounded-full blur-2xl" />
             <Loader2 className="relative w-16 h-16 text-emerald-500 animate-spin" />
           </div>
           <div className="text-center">
             <h2 className="text-xl font-semibold mb-1">Analysing your condition...</h2>
-            <p className="text-zinc-400 text-sm">Maitri AI is building your personalised plan</p>
+            <p className="text-zinc-500 text-sm">Maitri AI is building your personalised plan</p>
           </div>
         </div>
       </>
@@ -279,13 +279,13 @@ export const RehabScreen: React.FC = () => {
     return (
       <>
         {tutorialModal}
-        <div className="min-h-screen bg-zinc-950 text-zinc-50 px-6 py-10">
+        <div className="min-h-screen bg-zinc-50 text-zinc-950 px-6 py-10">
           <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none" />
 
           <div className="relative z-10 max-w-3xl mx-auto">
             <button
               onClick={() => setPhase('input')}
-              className="flex items-center gap-2 text-zinc-400 hover:text-zinc-100 transition-colors mb-8 text-sm font-medium"
+              className="flex items-center gap-2 text-zinc-500 hover:text-zinc-800 transition-colors mb-8 text-sm font-medium"
             >
               <ArrowLeft className="w-4 h-4" /> Back to Assessment
             </button>
@@ -294,16 +294,16 @@ export const RehabScreen: React.FC = () => {
               <Stethoscope className="w-7 h-7 text-emerald-500" />
               <h1 className="text-2xl font-bold">Your Personalised Rehab Plan</h1>
             </div>
-            <p className="text-zinc-400 text-sm mb-8 ml-10">
-              Based on: <span className="text-zinc-300 italic">"{problem}"</span>
+            <p className="text-zinc-500 text-sm mb-8 ml-10">
+              Based on: <span className="text-zinc-600 italic">"{problem}"</span>
             </p>
 
             {recommendations.length === 0 ? (
-              <div className="text-center text-zinc-400 py-16">
+              <div className="text-center text-zinc-500 py-16">
                 <p>No recommendations returned. Try rephrasing your problem.</p>
                 <button
                   onClick={() => setPhase('input')}
-                  className="mt-4 text-emerald-400 hover:text-emerald-300 underline text-sm"
+                  className="mt-4 text-emerald-600 hover:text-emerald-700 underline text-sm"
                 >
                   Try again
                 </button>
@@ -330,14 +330,14 @@ export const RehabScreen: React.FC = () => {
     return (
       <>
         {tutorialModal}
-        <div className="flex h-screen w-full flex-col items-center justify-center bg-zinc-950 text-zinc-50 gap-6 px-6">
-          <div className="w-full max-w-md p-6 rounded-2xl bg-red-500/10 border border-red-500/20 text-center">
-            <AlertCircle className="w-10 h-10 text-red-400 mx-auto mb-3" />
+        <div className="flex h-screen w-full flex-col items-center justify-center bg-zinc-50 text-zinc-950 gap-6 px-6">
+          <div className="w-full max-w-md p-6 rounded-2xl bg-red-50 border border-red-200 text-center">
+            <AlertCircle className="w-10 h-10 text-red-500 mx-auto mb-3" />
             <h2 className="text-lg font-semibold mb-2">Something went wrong</h2>
-            <p className="text-sm text-red-300 mb-6">{apiError}</p>
+            <p className="text-sm text-red-600 mb-6">{apiError}</p>
             <button
               onClick={() => setPhase('input')}
-              className="flex items-center gap-2 mx-auto text-sm font-medium text-zinc-300 hover:text-zinc-100 transition-colors"
+              className="flex items-center gap-2 mx-auto text-sm font-medium text-zinc-600 hover:text-zinc-900 transition-colors"
             >
               <ArrowLeft className="w-4 h-4" /> Back to Assessment
             </button>
@@ -349,47 +349,47 @@ export const RehabScreen: React.FC = () => {
 
   // ── Input (default landing page) ─────────────────────────────────────────────
   return (
-    <div className="relative flex min-h-screen w-full items-center justify-center bg-zinc-950 text-zinc-50 px-6 overflow-hidden">
+    <div className="relative flex min-h-screen w-full items-center justify-center bg-zinc-50 text-zinc-950 px-6 overflow-hidden">
       {/* Ambient background glow */}
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-[150px] pointer-events-none" />
 
       <div className="relative z-10 w-full max-w-xl">
         {/* Logo / Header */}
         <div className="flex items-center gap-3 mb-2">
-          <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-            <Activity className="w-6 h-6 text-emerald-500" />
+          <div className="p-2 rounded-xl bg-emerald-100 border border-emerald-200">
+            <Activity className="w-6 h-6 text-emerald-600" />
           </div>
           <h1 className="text-3xl font-bold tracking-tight">Maitri</h1>
         </div>
-        <p className="text-zinc-400 text-sm mb-8 ml-1">AI-powered exercise rehabilitation</p>
+        <p className="text-zinc-500 text-sm mb-8 ml-1">AI-powered exercise rehabilitation</p>
 
         {/* WebSocket error banner */}
         {wsError && (
-          <div className="mb-5 flex items-start gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400">
+          <div className="mb-5 flex items-start gap-3 p-4 rounded-xl bg-red-50 border border-red-200 text-red-600">
             <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
             <p className="text-sm">{wsError}</p>
           </div>
         )}
 
         {/* Problem input card */}
-        <div className="bg-zinc-900/70 border border-zinc-800 rounded-2xl p-6 mb-5 backdrop-blur-sm">
+        <div className="bg-white border border-zinc-200 rounded-2xl p-6 mb-5 shadow-sm">
           <div className="flex items-center gap-2 mb-4">
-            <Stethoscope className="w-5 h-5 text-emerald-400" />
-            <label className="font-semibold text-zinc-100">Describe your physical problem</label>
+            <Stethoscope className="w-5 h-5 text-emerald-500" />
+            <label className="font-semibold text-zinc-800">Describe your physical problem</label>
           </div>
           <textarea
             value={problem}
             onChange={e => setProblem(e.target.value.slice(0, MAX_CHARS))}
             placeholder="e.g. I have persistent knee pain after running, especially when going downstairs. My left knee swells after exercise..."
             rows={4}
-            className="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-zinc-100 placeholder:text-zinc-600 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all resize-none"
+            className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3 text-sm text-zinc-800 placeholder:text-zinc-400 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all resize-none"
           />
           <div className="flex items-center justify-between mt-2">
-            <span className="text-xs text-zinc-600">{problem.length} / {MAX_CHARS}</span>
+            <span className="text-xs text-zinc-400">{problem.length} / {MAX_CHARS}</span>
             <button
               onClick={handleGeneratePlan}
               disabled={!problem.trim()}
-              className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98] text-zinc-950 font-semibold rounded-xl px-5 py-2.5 text-sm transition-all duration-150"
+              className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98] text-white font-semibold rounded-xl px-5 py-2.5 text-sm transition-all duration-150 shadow-sm"
             >
               <Stethoscope className="w-4 h-4" />
               Generate My Rehab Plan
@@ -399,27 +399,27 @@ export const RehabScreen: React.FC = () => {
 
         {/* Quick start divider */}
         <div className="flex items-center gap-3 mb-5">
-          <div className="flex-1 h-px bg-zinc-800" />
-          <span className="text-xs text-zinc-600 uppercase tracking-wider">or jump straight in</span>
-          <div className="flex-1 h-px bg-zinc-800" />
+          <div className="flex-1 h-px bg-zinc-200" />
+          <span className="text-xs text-zinc-400 uppercase tracking-wider">or jump straight in</span>
+          <div className="flex-1 h-px bg-zinc-200" />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-5">
-          <div className="bg-zinc-900/70 border border-zinc-800 rounded-2xl p-4 backdrop-blur-sm">
-            <label className="text-xs text-zinc-400 uppercase tracking-wider font-semibold">Patient</label>
+          <div className="bg-white border border-zinc-200 rounded-2xl p-4 shadow-sm">
+            <label className="text-xs text-zinc-500 uppercase tracking-wider font-semibold">Patient</label>
             <input
               value={patient?.name ?? ''}
               onChange={(e) => setPatientName(e.target.value)}
               placeholder="Patient name (optional)"
-              className="mt-2 w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500 transition-all"
+              className="mt-2 w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500 transition-all"
             />
           </div>
-          <div className="bg-zinc-900/70 border border-zinc-800 rounded-2xl p-4 backdrop-blur-sm">
-            <label className="text-xs text-zinc-400 uppercase tracking-wider font-semibold">Goal Mode</label>
+          <div className="bg-white border border-zinc-200 rounded-2xl p-4 shadow-sm">
+            <label className="text-xs text-zinc-500 uppercase tracking-wider font-semibold">Goal Mode</label>
             <select
               value={goalMode}
               onChange={(e) => setGoalMode(e.target.value as 'Rehab' | 'Strength' | 'Endurance')}
-              className="mt-2 w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500 transition-all appearance-none"
+              className="mt-2 w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500 transition-all appearance-none"
             >
               <option value="Rehab">Rehab</option>
               <option value="Strength">Strength</option>
@@ -433,7 +433,7 @@ export const RehabScreen: React.FC = () => {
           <select
             value={quickExercise}
             onChange={e => setQuickExercise(e.target.value)}
-            className="flex-1 bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500 transition-all appearance-none"
+            className="flex-1 bg-white border border-zinc-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500 transition-all appearance-none"
           >
             {availableExercises.length === 0
               ? <option>Loading exercises...</option>
@@ -443,24 +443,24 @@ export const RehabScreen: React.FC = () => {
           <button
             onClick={() => quickExercise && openTutorial(quickExercise)}
             disabled={!quickExercise}
-            className="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98] text-zinc-100 font-semibold rounded-xl px-4 py-2.5 text-sm transition-all duration-150 border border-zinc-700"
+            className="flex items-center gap-2 bg-zinc-900 hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98] text-white font-semibold rounded-xl px-4 py-2.5 text-sm transition-all duration-150 shadow-sm"
           >
             <Zap className="w-4 h-4 text-emerald-400" />
             View Tutorial
           </button>
         </div>
 
-        <div className="mt-6 bg-zinc-900/30 border border-zinc-800 rounded-2xl p-5">
+        <div className="mt-6 bg-white border border-zinc-200 rounded-2xl p-5 shadow-sm">
           <div className="flex items-center justify-between mb-3">
-            <div className="text-xs text-zinc-500 uppercase tracking-wider font-semibold">Tutorial Library</div>
-            <div className="text-xs text-zinc-500">Pick any exercise to preview instructions</div>
+            <div className="text-xs text-zinc-400 uppercase tracking-wider font-semibold">Tutorial Library</div>
+            <div className="text-xs text-zinc-400">Pick any exercise to preview instructions</div>
           </div>
           <div className="flex flex-wrap gap-2">
             {(availableExercises.length ? availableExercises : ['Squats']).map((ex) => (
               <button
                 key={ex}
                 onClick={() => openTutorial(ex)}
-                className="px-3 py-2 rounded-xl border border-zinc-800 bg-zinc-950/60 hover:bg-zinc-900 text-sm font-semibold"
+                className="px-3 py-2 rounded-xl border border-zinc-200 bg-zinc-50 hover:bg-zinc-100 text-sm font-semibold"
               >
                 {ex}
               </button>
