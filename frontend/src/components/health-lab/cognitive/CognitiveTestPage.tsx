@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Brain, Zap, Eye, Hash, Timer, CheckCircle } from 'lucide-react';
 import { useHealthLab } from '../../../context/HealthLabContext';
 import { SectionHeader } from '../shared/GlassCard';
@@ -11,7 +11,6 @@ const ReactionTimeTest: React.FC<{ onComplete: (score: number, raw: Record<strin
   const [startTime, setStartTime] = useState(0);
   const [reactionTime, setReactionTime] = useState(0);
   const [attempts, setAttempts] = useState<number[]>([]);
-  const startedRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const startRound = useCallback(() => {
@@ -23,11 +22,12 @@ const ReactionTimeTest: React.FC<{ onComplete: (score: number, raw: Record<strin
     }, delay);
   }, []);
 
-  // Start first round on mount without effect
-  if (!startedRef.current) {
-    startedRef.current = true;
-    setTimeout(() => startRound(), 0);
-  }
+  /* eslint-disable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
+  useEffect(() => {
+    startRound();
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+  }, []);
+  /* eslint-enable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
 
   const handleClick = () => {
     if (phase === 'go') {
@@ -173,14 +173,6 @@ const SustainedAttentionTest: React.FC<{ onComplete: (score: number, raw: Record
   const [misses, setMisses] = useState(0);
   const [falseAlarms, setFalseAlarms] = useState(0);
 
-  useEffect(() => {
-    if (currentIndex >= targets.length) {
-      const totalTargets = targets.filter(t => t.isTarget).length;
-      const score = totalTargets > 0 ? Math.round((hits / totalTargets) * 100) : 0;
-      onComplete(score, { hits, misses, falseAlarms, totalTargets });
-    }
-  }, [currentIndex]);
-
   if (currentIndex >= targets.length) {
     return (
       <div className="text-center py-8">
@@ -199,14 +191,29 @@ const SustainedAttentionTest: React.FC<{ onComplete: (score: number, raw: Record
       setFalseAlarms(f => f + 1);
     }
     setTargets(ts => ts.map((t, i) => i === currentIndex ? { ...t, clicked: true } : t));
-    setCurrentIndex(i => i + 1);
+    const nextIndex = currentIndex + 1;
+    setCurrentIndex(nextIndex);
+    if (nextIndex >= targets.length) {
+      const totalTargets = targets.filter(t => t.isTarget).length;
+      const newHits = current.isTarget ? hits + 1 : hits;
+      const newFA = current.isTarget ? falseAlarms : falseAlarms + 1;
+      const score = totalTargets > 0 ? Math.round((newHits / totalTargets) * 100) : 0;
+      setTimeout(() => onComplete(score, { hits: newHits, misses, falseAlarms: newFA, totalTargets }), 100);
+    }
   };
 
   const handleSkip = () => {
     if (current.isTarget) {
       setMisses(m => m + 1);
     }
-    setCurrentIndex(i => i + 1);
+    const nextIndex = currentIndex + 1;
+    setCurrentIndex(nextIndex);
+    if (nextIndex >= targets.length) {
+      const totalTargets = targets.filter(t => t.isTarget).length;
+      const newMisses = current.isTarget ? misses + 1 : misses;
+      const score = totalTargets > 0 ? Math.round((hits / totalTargets) * 100) : 0;
+      setTimeout(() => onComplete(score, { hits, misses: newMisses, falseAlarms, totalTargets }), 100);
+    }
   };
 
   return (

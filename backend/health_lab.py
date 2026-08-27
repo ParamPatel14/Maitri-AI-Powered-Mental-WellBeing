@@ -243,6 +243,176 @@ Respond ONLY with valid JSON (no markdown fences, no preamble):
 """
 
 
+# ── Pattern Discovery ("What Makes Me Feel Good?") ─────────────────────────────
+
+PATTERN_DISCOVERY_PROMPT = """\
+You are a friendly wellness pattern analyst. A user wants to understand what \
+makes them feel good. You have their complete data: daily check-ins, habits, \
+lifestyle factors, and wearable data.
+
+Your job is to find correlations between WHAT they do and HOW they feel.
+
+User profile:
+{profile}
+
+All check-in data:
+{checkins}
+
+Habit tracking data:
+{habits}
+
+Lifestyle data (caffeine, water, screen time, etc.):
+{lifestyles}
+
+Wearable data (sleep hours, steps, heart rate):
+{wearables}
+
+Analyze the data carefully. Look for patterns like:
+- "On days when you sleep more than X hours, your energy tends to be higher"
+- "Your mood is usually better on days you do [habit]"
+- "You tend to feel more stressed after X days of poor sleep"
+- "Your energy seems higher on days you walk more than X steps"
+- "Caffeine intake of X+ cups is associated with lower sleep quality"
+
+For each pattern found:
+1. State the pattern clearly in simple language
+2. Reference the specific data (e.g., "your energy averaged 4.1 vs 3.2")
+3. Use tentative language: "Your data suggests...", "We noticed...", "This appears to be associated with..."
+4. NEVER state causation — only correlation
+5. If data is insufficient, say "We don't have enough information yet"
+
+IMPORTANT: These are NOT medical facts. Present them as observations from the \
+user's own data. Use language like "Your data suggests..." not "Studies show..."
+
+Return 3-6 patterns, ranked by strength of correlation.
+
+Respond ONLY with valid JSON (no markdown fences, no preamble):
+{{
+  "patterns": [
+    {{
+      "title": "Short friendly title",
+      "observation": "What the data shows, with specific numbers",
+      "strength": "strong",
+      "type": "positive"
+    }}
+  ],
+  "summary": "A warm 2-3 sentence summary of what we found"
+}}
+
+type must be: "positive", "neutral", or "something_to_watch"
+strength must be: "strong", "moderate", or "weak"
+"""
+
+
+# ── Experiment Plan (AI creates structured plan from hypothesis) ────────────────
+
+EXPERIMENT_PLAN_PROMPT = """\
+You are a friendly wellness experiment designer. A user wants to run a personal \
+experiment to test whether a specific habit affects their well-being.
+
+User profile:
+{profile}
+
+Their recent data (for context):
+{checkins}
+
+Their experiment idea: {hypothesis}
+
+Create a structured experiment plan that:
+1. Restates the hypothesis clearly
+2. Defines specific, measurable goals
+3. Sets a realistic duration (7 or 14 days)
+4. Lists what we will track each day
+5. Gives clear instructions for what the user should do
+6. Explains what "success" would look like
+
+Keep the language warm, simple, and encouraging. No medical jargon.
+
+Respond ONLY with valid JSON (no markdown fences, no preamble):
+{{
+  "title": "Friendly experiment name",
+  "hypothesis": "Clear statement of what we're testing",
+  "goal": "What we're trying to find out",
+  "duration": 14,
+  "dailyInstructions": "What the user should do each day",
+  "trackingMetrics": ["sleep_quality", "energy", "mood", "stress"],
+  "successCriteria": "What would indicate the habit is working",
+  "notes": "Any additional tips or context"
+}}
+"""
+
+
+# ── Experiment Analysis v2 (with before/during comparison) ─────────────────────
+
+EXPERIMENT_ANALYSIS_V2_PROMPT = """\
+You are a personal wellness experiment analyst. A user has completed a \
+personal experiment. Your job is to compare their data BEFORE and DURING \
+the experiment, and explain what happened — being careful not to claim \
+causation when you can only show correlation.
+
+Experiment details:
+{experiment}
+
+Data BEFORE the experiment (baseline period):
+{before_checkins}
+
+Data DURING the experiment:
+{during_checkins}
+
+Habit tracking data during the experiment:
+{during_habits}
+
+IMPORTANT RULES:
+1. Calculate actual averages from the data — don't make up numbers
+2. Compare BEFORE vs DURING for each metric
+3. Use phrases like:
+   - "Your data suggests..."
+   - "We noticed that..."
+   - "This is associated with..."
+   - "We cannot say for certain that X caused Y"
+   - "Other factors may have also played a role"
+4. NEVER claim the habit definitely caused an improvement
+5. Always acknowledge limitations (small sample size, other changes, etc.)
+6. Be honest if the results are mixed or inconclusive
+
+Return the analysis in this JSON format:
+
+{{
+  "title": "Experiment Complete: [habit name]",
+  "summary": "2-3 sentence overview of what happened",
+  "beforeMetrics": {{
+    "averageMood": 3.2,
+    "averageEnergy": 3.5,
+    "averageSleepQuality": 3.0,
+    "averageStress": 3.8,
+    "dataPoints": 10
+  }},
+  "duringMetrics": {{
+    "averageMood": 4.1,
+    "averageEnergy": 4.3,
+    "averageSleepQuality": 3.8,
+    "averageStress": 2.9,
+    "dataPoints": 12,
+    "habitCompletionRate": 0.85
+  }},
+  "changes": [
+    {{
+      "metric": "Mood",
+      "before": 3.2,
+      "during": 4.1,
+      "change": "+0.9",
+      "direction": "improved"
+    }}
+  ],
+  "interpretation": "Detailed interpretation using cautious language about causation",
+  "caveats": "Limitations and alternative explanations",
+  "recommendation": "Should they continue this habit? Be nuanced."
+}}
+
+direction must be: "improved", "declined", or "no_clear_change"
+"""
+
+
 # ── Public API ─────────────────────────────────────────────────────────────────
 
 def analyze(task: str, data: dict[str, Any]) -> dict[str, Any]:
@@ -252,7 +422,9 @@ def analyze(task: str, data: dict[str, Any]) -> dict[str, Any]:
     Parameters
     ----------
     task : str
-        One of: weekly_report, pattern_finder, experiment_analysis, what_if
+        One of: weekly_report, pattern_finder, experiment_analysis, what_if,
+        baseline_interpretation, cognitive_analysis, pattern_discovery,
+        experiment_plan, experiment_analysis_v2
     data : dict
         User data including profile, checkins, habit_logs, etc.
 
@@ -297,6 +469,27 @@ def analyze(task: str, data: dict[str, Any]) -> dict[str, Any]:
             profile=json.dumps(data.get("profile", {}), indent=2),
             results=json.dumps(data.get("results", []), indent=2),
             checkins=json.dumps(data.get("checkins", []), indent=2),
+        )
+    elif task == "pattern_discovery":
+        prompt = PATTERN_DISCOVERY_PROMPT.format(
+            profile=json.dumps(data.get("profile", {}), indent=2),
+            checkins=json.dumps(data.get("checkins", []), indent=2),
+            habits=json.dumps(data.get("habit_logs", []), indent=2),
+            lifestyles=json.dumps(data.get("lifestyles", []), indent=2),
+            wearables=json.dumps(data.get("wearables", []), indent=2),
+        )
+    elif task == "experiment_plan":
+        prompt = EXPERIMENT_PLAN_PROMPT.format(
+            profile=json.dumps(data.get("profile", {}), indent=2),
+            checkins=json.dumps(data.get("checkins", []), indent=2),
+            hypothesis=data.get("hypothesis", ""),
+        )
+    elif task == "experiment_analysis_v2":
+        prompt = EXPERIMENT_ANALYSIS_V2_PROMPT.format(
+            experiment=json.dumps(data.get("experiment", {}), indent=2),
+            before_checkins=json.dumps(data.get("before_checkins", []), indent=2),
+            during_checkins=json.dumps(data.get("during_checkins", []), indent=2),
+            during_habits=json.dumps(data.get("during_habits", []), indent=2),
         )
     else:
         raise ValueError(f"Unknown analysis task: {task}")

@@ -3,7 +3,6 @@ import { MessageCircle, Send, ArrowRight } from 'lucide-react';
 import { useHealthLab } from '../../../context/HealthLabContext';
 import { SectionHeader } from '../shared/GlassCard';
 import { today } from '../../../lib/date-utils';
-import { saveConversation } from '../../../lib/data-collection';
 import { DAILY_QUESTIONS, CAFFEINE_OPTIONS, CAFFEINE_LABELS, WATER_INTAKE, WATER_INTAKE_LABELS, SCREEN_BEFORE_BED, SCREEN_BEFORE_BED_LABELS } from '../../../types/health-lab';
 import type { ConversationEntry } from '../../../types/health-lab';
 
