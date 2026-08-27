@@ -95,9 +95,8 @@ const EXERCISE_TUTORIALS: Record<string, { recommendedView: 'side' | 'front' | '
 // ── Exercise card ──────────────────────────────────────────────────────────────
 const ExerciseCard: React.FC<{
   rec: RehabRecommendation;
-  available: boolean;
   onOpen: (exercise: string) => void;
-}> = ({ rec, available, onOpen }) => (
+}> = ({ rec, onOpen }) => (
   <div className="relative flex flex-col gap-4 p-5 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 hover:border-emerald-500/60 hover:bg-emerald-500/10 transition-all duration-200">
     {/* Exercise name */}
     <div>
@@ -177,8 +176,6 @@ export const RehabScreen: React.FC = () => {
             const t = EXERCISE_TUTORIALS[tutorialFor] || EXERCISE_TUTORIALS['Squats'];
             const view = t.recommendedView;
             const viewLabel = view === 'either' ? 'Either view' : (view === 'side' ? 'Side view' : 'Front view');
-            const canStart = isAvailable(tutorialFor);
-
             return (
               <>
                 <div className="md:col-span-1">
@@ -317,7 +314,6 @@ export const RehabScreen: React.FC = () => {
                   <ExerciseCard
                     key={rec.exercise}
                     rec={rec}
-                    available={isAvailable(rec.exercise)}
                     onOpen={openTutorial}
                   />
                 ))}
