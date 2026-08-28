@@ -23,6 +23,7 @@ const emptyProfile: UserProfile = {
   trackedHabits: [],
   checkInFrequency: 'Daily',
   wantsExperiments: true,
+  energyPattern: 'Steady throughout the day',
   onboardingComplete: false,
   createdAt: new Date().toISOString(),
 };
@@ -50,9 +51,9 @@ export const OnboardingWizard: React.FC = () => {
       {/* Ambient glow */}
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-violet-500/8 rounded-full blur-[150px] pointer-events-none" />
 
-      <div className="relative z-10 w-full max-w-xl">
+      <div className="relative z-10 w-full max-w-xl flex flex-col max-h-screen">
         {/* Header */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-6 shrink-0">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-violet-100 border border-violet-200 text-violet-700 text-xs font-semibold uppercase tracking-wider mb-4">
             <Brain className="w-3.5 h-3.5" />
             Welcome to Health Lab
@@ -62,12 +63,12 @@ export const OnboardingWizard: React.FC = () => {
         </div>
 
         {/* Step indicator */}
-        <div className="flex justify-center mb-8">
+        <div className="flex justify-center mb-6 shrink-0">
           <StepIndicator currentStep={step} totalSteps={TOTAL_STEPS} />
         </div>
 
-        {/* Step content */}
-        <div className="bg-white border border-zinc-200 rounded-3xl p-8 shadow-sm min-h-[340px]">
+        {/* Step content - scrollable */}
+        <div className="bg-white border border-zinc-200 rounded-3xl p-8 shadow-sm overflow-y-auto flex-1 min-h-0">
           {step === 1 && <BasicInfoStep profile={profile} update={update} />}
           {step === 2 && <SleepEnergyStep profile={profile} update={update} />}
           {step === 3 && <ActivityHabitsStep profile={profile} update={update} />}
@@ -75,8 +76,8 @@ export const OnboardingWizard: React.FC = () => {
           {step === 5 && <SummaryStep profile={profile} />}
         </div>
 
-        {/* Navigation */}
-        <div className="flex items-center justify-between mt-6">
+        {/* Navigation - always visible */}
+        <div className="flex items-center justify-between mt-4 shrink-0">
           <button
             onClick={() => setStep(s => s - 1)}
             disabled={step === 1}

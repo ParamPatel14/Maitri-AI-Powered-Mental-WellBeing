@@ -171,6 +171,19 @@ class HealthLabAnalyzeRequest(BaseModel):
     baseline: dict = {}
     today_values: dict = {}
     results: list = []
+    lifestyles: list = []
+    wearables: list = []
+    hypothesis: str | None = None
+    before_checkins: list = []
+    during_checkins: list = []
+    during_habits: list = []
+    learned_patterns: list = []
+    patterns: list = []
+    experiment_results: list = []
+    current_lifestyle: dict = {}
+    scenarios: list = []
+    conversation_history: list = []
+    user_message: str | None = None
 
 
 @app.post("/health-lab/analyze")
@@ -182,6 +195,8 @@ async def health_lab_analyze_endpoint(request: HealthLabAnalyzeRequest):
     valid_tasks = {
         'weekly_report', 'pattern_finder', 'experiment_analysis', 'what_if',
         'baseline_interpretation', 'cognitive_analysis',
+        'pattern_discovery', 'experiment_plan', 'experiment_analysis_v2',
+        'future_simulation', 'scenario_comparison', 'health_scientist_chat',
     }
     if request.task not in valid_tasks:
         raise HTTPException(status_code=400, detail=f"Unknown task: {request.task}")
@@ -196,6 +211,19 @@ async def health_lab_analyze_endpoint(request: HealthLabAnalyzeRequest):
         "baseline": request.baseline,
         "today_values": request.today_values,
         "results": request.results,
+        "lifestyles": request.lifestyles,
+        "wearables": request.wearables,
+        "hypothesis": request.hypothesis,
+        "before_checkins": request.before_checkins,
+        "during_checkins": request.during_checkins,
+        "during_habits": request.during_habits,
+        "learned_patterns": request.learned_patterns,
+        "patterns": request.patterns,
+        "experiment_results": request.experiment_results,
+        "current_lifestyle": request.current_lifestyle,
+        "scenarios": request.scenarios,
+        "conversation_history": request.conversation_history,
+        "user_message": request.user_message,
     }
 
     loop = asyncio.get_event_loop()

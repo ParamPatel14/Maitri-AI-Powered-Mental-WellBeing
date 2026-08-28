@@ -12,6 +12,8 @@ import type {
   PostureSnapshot,
   PersonalBaseline,
   DataSourceConfig,
+  TimelineEvent,
+  LearnedInsight,
 } from '../types/health-lab';
 
 const STORE_KEY = 'maitri.healthlab';
@@ -32,6 +34,8 @@ interface HealthLabStore {
   postureSnapshots: PostureSnapshot[];
   baseline: PersonalBaseline | null;
   dataSources: DataSourceConfig[];
+  timeline: TimelineEvent[];
+  learnedInsights: LearnedInsight[];
 }
 
 function defaultStore(): HealthLabStore {
@@ -50,6 +54,8 @@ function defaultStore(): HealthLabStore {
     postureSnapshots: [],
     baseline: null,
     dataSources: [],
+    timeline: [],
+    learnedInsights: [],
   };
 }
 
@@ -279,4 +285,37 @@ export function saveDataSource(source: DataSourceConfig): void {
     store.dataSources.push(source);
   }
   saveStore(store);
+}
+
+// ── Timeline Events ───────────────────────────────────────────────────────────
+export function getTimeline(): TimelineEvent[] {
+  return loadStore().timeline;
+}
+
+export function addTimelineEvent(event: TimelineEvent): void {
+  const store = loadStore();
+  store.timeline.push(event);
+  store.timeline.sort((a, b) => a.date.localeCompare(b.date) || a.createdAt.localeCompare(b.createdAt));
+  saveStore(store);
+}
+
+// ── Learned Insights ──────────────────────────────────────────────────────────
+export function getLearnedInsights(): LearnedInsight[] {
+  return loadStore().learnedInsights;
+}
+
+export function addLearnedInsight(insight: LearnedInsight): void {
+  const store = loadStore();
+  // Avoid duplicates by checking finding text
+  const existing = store.learnedInsights.findIndex(i => i.finding === insight.finding);
+  if (existing >= 0) {
+    store.learnedInsights[existing] = { ...store.learnedInsights[existing], lastUpdated: insight.lastUpdated, strength: insight.strength };
+  } else {
+    store.learnedInsights.push(insight);
+  }
+  saveStore(store);
+}
+
+export function getLearnedInsightsByCategory(category: LearnedInsight['category']): LearnedInsight[] {
+  return loadStore().learnedInsights.filter(i => i.category === category);
 }

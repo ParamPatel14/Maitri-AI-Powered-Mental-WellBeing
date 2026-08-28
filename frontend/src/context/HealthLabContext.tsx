@@ -17,6 +17,8 @@ import type {
   PostureSnapshot,
   PersonalBaseline,
   DataSourceConfig,
+  TimelineEvent,
+  LearnedInsight,
 } from '../types/health-lab';
 import * as storage from '../lib/storage';
 import { today, getStreak } from '../lib/date-utils';
@@ -36,6 +38,8 @@ interface HealthLabState {
   postureSnapshots: PostureSnapshot[];
   baseline: PersonalBaseline | null;
   dataSources: DataSourceConfig[];
+  timeline: TimelineEvent[];
+  learnedInsights: LearnedInsight[];
   todaysCheckin: DailyCheckin | null;
   todaysHabitLog: HabitLog | null;
   streak: number;
@@ -57,6 +61,8 @@ interface HealthLabState {
   savePostureSnapshot: (snapshot: PostureSnapshot) => void;
   saveBaseline: (baseline: PersonalBaseline) => void;
   saveDataSource: (source: DataSourceConfig) => void;
+  addTimelineEvent: (event: TimelineEvent) => void;
+  addLearnedInsight: (insight: LearnedInsight) => void;
   refreshData: () => void;
   resetAll: () => void;
 }
@@ -78,6 +84,8 @@ export const HealthLabProvider: React.FC<{ children: ReactNode }> = ({ children 
   const [postureSnapshots, setPostureSnapshots] = useState<PostureSnapshot[]>(() => storage.getPostureSnapshots());
   const [baseline, setBaseline] = useState<PersonalBaseline | null>(() => storage.getBaseline());
   const [dataSources, setDataSources] = useState<DataSourceConfig[]>(() => storage.getDataSources());
+  const [timeline, setTimeline] = useState<TimelineEvent[]>(() => storage.getTimeline());
+  const [learnedInsights, setLearnedInsights] = useState<LearnedInsight[]>(() => storage.getLearnedInsights());
 
   const refreshData = useCallback(() => {
     setProfile(storage.getProfile());
@@ -93,6 +101,8 @@ export const HealthLabProvider: React.FC<{ children: ReactNode }> = ({ children 
     setPostureSnapshots(storage.getPostureSnapshots());
     setBaseline(storage.getBaseline());
     setDataSources(storage.getDataSources());
+    setTimeline(storage.getTimeline());
+    setLearnedInsights(storage.getLearnedInsights());
   }, []);
 
   const saveProfile = useCallback((p: UserProfile) => {
@@ -190,6 +200,16 @@ export const HealthLabProvider: React.FC<{ children: ReactNode }> = ({ children 
     setDataSources(storage.getDataSources());
   }, []);
 
+  const addTimelineEvent_ = useCallback((event: TimelineEvent) => {
+    storage.addTimelineEvent(event);
+    setTimeline(storage.getTimeline());
+  }, []);
+
+  const addLearnedInsight_ = useCallback((insight: LearnedInsight) => {
+    storage.addLearnedInsight(insight);
+    setLearnedInsights(storage.getLearnedInsights());
+  }, []);
+
   const resetAll = useCallback(() => {
     storage.resetAllData();
     refreshData();
@@ -203,7 +223,7 @@ export const HealthLabProvider: React.FC<{ children: ReactNode }> = ({ children 
     <HealthLabContext.Provider value={{
       profile, checkins, habitLogs, insights, experiments, whatIfScenarios,
       wearables, lifestyles, cognitives, conversations, postureSnapshots,
-      baseline, dataSources,
+      baseline, dataSources, timeline, learnedInsights,
       todaysCheckin, todaysHabitLog, streak,
       saveProfile, completeOnboarding, saveCheckin, saveHabitLog,
       toggleHabit, addTrackedHabit, removeTrackedHabit,
@@ -215,6 +235,8 @@ export const HealthLabProvider: React.FC<{ children: ReactNode }> = ({ children 
       savePostureSnapshot: savePostureSnapshot_,
       saveBaseline: saveBaseline_,
       saveDataSource: saveDataSource_,
+      addTimelineEvent: addTimelineEvent_,
+      addLearnedInsight: addLearnedInsight_,
       refreshData, resetAll,
     }}>
       {children}

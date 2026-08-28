@@ -3,6 +3,7 @@ import { Target, TrendingUp, TrendingDown, Minus, AlertCircle } from 'lucide-rea
 import { useHealthLab } from '../../../context/HealthLabContext';
 import { SectionHeader, EmptyState } from '../shared/GlassCard';
 import { computeBaseline, getTrendLabel } from '../../../lib/baseline';
+import { today } from '../../../lib/date-utils';
 import type { BaselineMetric } from '../../../types/health-lab';
 
 const StatusBadge: React.FC<{ status: BaselineMetric['status'] }> = ({ status }) => {
@@ -99,7 +100,7 @@ const MetricRow: React.FC<{ metric: BaselineMetric }> = ({ metric }) => {
 };
 
 export const BaselinePage: React.FC = () => {
-  const { checkins, wearables, lifestyles, cognitives, baseline, saveBaseline } = useHealthLab();
+  const { checkins, wearables, lifestyles, cognitives, baseline, saveBaseline, addTimelineEvent } = useHealthLab();
 
   const computedBaseline = useMemo(() => {
     if (checkins.length < 3 && wearables.length < 3 && lifestyles.length < 3) return null;
@@ -112,6 +113,15 @@ export const BaselinePage: React.FC = () => {
   const handleCompute = () => {
     if (!computedBaseline) return;
     saveBaseline(computedBaseline);
+    addTimelineEvent({
+      id: crypto.randomUUID(),
+      date: today(),
+      type: 'baseline_computed',
+      title: 'Personal baseline computed',
+      description: `Baseline computed from ${computedBaseline.totalDays} days of data across ${computedBaseline.metrics.length} metrics.`,
+      metadata: { totalDays: computedBaseline.totalDays, metricCount: computedBaseline.metrics.length },
+      createdAt: new Date().toISOString(),
+    });
   };
 
   if (!displayBaseline || displayBaseline.totalDays < 3) {

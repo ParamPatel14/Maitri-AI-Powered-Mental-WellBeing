@@ -13,6 +13,9 @@ import {
   HelpCircle,
   User,
   ArrowLeft,
+  Heart,
+  Clock,
+  Microscope,
 } from 'lucide-react';
 
 const PRIMARY_NAV = [
@@ -23,6 +26,8 @@ const PRIMARY_NAV = [
 ];
 
 const INSIGHTS_NAV = [
+  { to: '/health-lab/scientist', icon: Microscope, label: 'Health Scientist' },
+  { to: '/health-lab/patterns', icon: Heart, label: 'What Makes Me Feel Good' },
   { to: '/health-lab/baseline', icon: Target, label: 'My Baseline' },
   { to: '/health-lab/cognitive', icon: Brain, label: 'Cognitive Tests' },
   { to: '/health-lab/datasources', icon: Database, label: 'Data Sources' },
@@ -32,6 +37,8 @@ const INSIGHTS_NAV = [
 const EXPLORE_NAV = [
   { to: '/health-lab/experiments', icon: FlaskConical, label: 'Experiments' },
   { to: '/health-lab/what-if', icon: HelpCircle, label: 'What-If' },
+  { to: '/health-lab/future', icon: Clock, label: 'Future Simulator' },
+  { to: '/health-lab/timeline', icon: Clock, label: 'My Journey' },
 ];
 
 export const Sidebar: React.FC = () => {

@@ -11,6 +11,7 @@ export interface UserProfile {
   trackedHabits: string[];
   checkInFrequency: string;
   wantsExperiments: boolean;
+  energyPattern: string;
   onboardingComplete: boolean;
   createdAt: string;
 }
@@ -176,6 +177,18 @@ export interface Experiment {
   status: ExperimentStatus;
   result: ExperimentResult | null;
   createdAt: string;
+  plan: ExperimentPlan | null;
+}
+
+export interface ExperimentPlan {
+  title: string;
+  hypothesis: string;
+  goal: string;
+  duration: number;
+  dailyInstructions: string;
+  trackingMetrics: string[];
+  successCriteria: string;
+  notes: string;
 }
 
 export interface ExperimentResult {
@@ -183,6 +196,117 @@ export interface ExperimentResult {
   habitCompletionRate: number;
   moodWithHabit: number;
   moodWithoutHabit: number;
+  recommendation: string;
+  generatedAt: string;
+}
+
+// ── Enhanced Experiment Result v2 ──────────────────────────────────────────────
+export interface ExperimentResultV2 {
+  title: string;
+  summary: string;
+  verdict: 'success' | 'no_clear_change' | 'mixed';
+  beforeMetrics: {
+    averageMood: number;
+    averageEnergy: number;
+    averageSleepQuality: number;
+    averageStress: number;
+    dataPoints: number;
+  };
+  duringMetrics: {
+    averageMood: number;
+    averageEnergy: number;
+    averageSleepQuality: number;
+    averageStress: number;
+    dataPoints: number;
+    habitCompletionRate: number;
+  };
+  changes: Array<{
+    metric: string;
+    before: number;
+    during: number;
+    change: string;
+    direction: 'improved' | 'declined' | 'no_clear_change';
+  }>;
+  interpretation: string;
+  caveats: string;
+  recommendation: string;
+  nextExperimentSuggestion: string;
+  generatedAt: string;
+}
+
+// ── Pattern Discovery ─────────────────────────────────────────────────────────
+export interface DiscoveredPattern {
+  id: string;
+  title: string;
+  observation: string;
+  strength: 'strong' | 'moderate' | 'weak';
+  type: 'positive' | 'neutral' | 'something_to_watch';
+}
+
+export interface PatternDiscoveryResult {
+  patterns: DiscoveredPattern[];
+  summary: string;
+  generatedAt: string;
+}
+
+// ── Future Simulation ─────────────────────────────────────────────────────────
+export type FutureTrend = 'improving' | 'stable' | 'declining' | 'slightly_improving' | 'slightly_declining' | 'uncertain';
+
+export interface FutureMetricEstimate {
+  trend: FutureTrend;
+  description: string;
+}
+
+export interface FutureTimeframe {
+  period: string;
+  energy: FutureMetricEstimate;
+  sleep: FutureMetricEstimate;
+  stress: FutureMetricEstimate;
+  mood: FutureMetricEstimate;
+  activity: FutureMetricEstimate;
+  overall: FutureMetricEstimate;
+}
+
+export interface FutureSimulationResult {
+  summary: string;
+  timeframes: FutureTimeframe[];
+  keyInsights: string[];
+  suggestion: string;
+  generatedAt: string;
+}
+
+// ── Scenario Comparison ───────────────────────────────────────────────────────
+export interface ScenarioMetricChange {
+  current: number;
+  projected: number;
+  change: number;
+}
+
+export interface ScenarioMetrics {
+  energy: ScenarioMetricChange;
+  stress: ScenarioMetricChange;
+  sleep: ScenarioMetricChange;
+  mood: ScenarioMetricChange;
+  overall: ScenarioMetricChange;
+}
+
+export interface Scenario {
+  id: string;
+  name: string;
+  description: string;
+  isCustom: boolean;
+}
+
+export interface ScenarioResult {
+  name: string;
+  description: string;
+  metrics: ScenarioMetrics;
+  insight: string;
+}
+
+export interface ScenarioComparisonResult {
+  summary: string;
+  scenarios: ScenarioResult[];
   recommendation: string;
   generatedAt: string;
 }
@@ -342,3 +466,51 @@ export const DAILY_QUESTIONS = [
   { id: 'highlight', question: 'What was the best part of your day so far?', category: 'mood' as const },
   { id: 'challenge', question: 'Anything challenging happen today?', category: 'stress' as const },
 ] as const;
+
+// ── Timeline Events ───────────────────────────────────────────────────────────
+export type TimelineEventType =
+  | 'data_collection_started'
+  | 'pattern_discovered'
+  | 'experiment_started'
+  | 'experiment_completed'
+  | 'experiment_failed'
+  | 'future_predicted'
+  | 'baseline_computed'
+  | 'milestone_reached'
+  | 'insight_learned'
+  | 'checkin_streak';
+
+export interface TimelineEvent {
+  id: string;
+  date: string;
+  type: TimelineEventType;
+  title: string;
+  description: string;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+}
+
+// ── Learned Insights (cross-module knowledge) ─────────────────────────────────
+export interface LearnedInsight {
+  id: string;
+  category: 'sleep' | 'energy' | 'mood' | 'stress' | 'activity' | 'social' | 'nutrition' | 'general';
+  finding: string;
+  evidence: string;
+  strength: 'strong' | 'moderate' | 'weak';
+  source: 'pattern_discovery' | 'experiment' | 'baseline' | 'checkin_analysis';
+  discoveredAt: string;
+  lastUpdated: string;
+}
+
+// ── Health Scientist Chat ─────────────────────────────────────────────────────
+export interface HealthScientistMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: string;
+  dataUsed?: string[];
+  suggestedAction?: {
+    type: 'create_experiment' | 'view_patterns' | 'view_timeline' | 'check_baseline';
+    label: string;
+  };
+}

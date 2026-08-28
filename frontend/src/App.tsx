@@ -17,6 +17,10 @@ import { BaselinePage } from './components/health-lab/baseline/BaselinePage';
 import { CognitiveTestPage } from './components/health-lab/cognitive/CognitiveTestPage';
 import { DataSourcesPage } from './components/health-lab/datasources/DataSourcesPage';
 import { ConversationalCheckin } from './components/health-lab/checkin/ConversationalCheckin';
+import { PatternDiscoveryPage } from './components/health-lab/patterns/PatternDiscoveryPage';
+import { FutureSimulatorPage } from './components/health-lab/future/FutureSimulatorPage';
+import { TimelinePage } from './components/health-lab/timeline/TimelinePage';
+import { HealthScientistPage } from './components/health-lab/scientist/HealthScientistPage';
 
 const AppContent: React.FC = () => {
   const { isConnected, currentExercise } = useMaitriStream();
@@ -35,12 +39,16 @@ const AppContent: React.FC = () => {
         <Route path="checkin" element={<CheckinPage />} />
         <Route path="chat" element={<ConversationalCheckin />} />
         <Route path="habits" element={<HabitsPage />} />
+        <Route path="scientist" element={<HealthScientistPage />} />
+        <Route path="patterns" element={<PatternDiscoveryPage />} />
         <Route path="baseline" element={<BaselinePage />} />
         <Route path="cognitive" element={<CognitiveTestPage />} />
         <Route path="datasources" element={<DataSourcesPage />} />
         <Route path="insights" element={<InsightsPage />} />
         <Route path="experiments" element={<ExperimentsPage />} />
         <Route path="what-if" element={<WhatIfPage />} />
+        <Route path="future" element={<FutureSimulatorPage />} />
+        <Route path="timeline" element={<TimelinePage />} />
         <Route path="profile" element={<ProfilePage />} />
       </Route>
       <Route path="/psychological" element={<Navigate to="/health-lab" replace />} />
