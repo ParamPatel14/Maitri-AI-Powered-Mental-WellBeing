@@ -173,6 +173,10 @@ class HealthLabAnalyzeRequest(BaseModel):
     results: list = []
     lifestyles: list = []
     wearables: list = []
+    exercise_sessions: list = []
+    performance_trends: list = []
+    readiness_records: list = []
+    cognitive_tests: list = []
     hypothesis: str | None = None
     before_checkins: list = []
     during_checkins: list = []
@@ -213,6 +217,10 @@ async def health_lab_analyze_endpoint(request: HealthLabAnalyzeRequest):
         "results": request.results,
         "lifestyles": request.lifestyles,
         "wearables": request.wearables,
+        "exercise_sessions": request.exercise_sessions,
+        "performance_trends": request.performance_trends,
+        "readiness_records": request.readiness_records,
+        "cognitive_tests": request.cognitive_tests,
         "hypothesis": request.hypothesis,
         "before_checkins": request.before_checkins,
         "during_checkins": request.during_checkins,

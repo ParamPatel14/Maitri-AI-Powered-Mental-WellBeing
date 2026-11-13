@@ -67,6 +67,10 @@ class BaseAnalyser(ABC):
     ) -> None:
         return
 
+    def on_tracking_lost(self) -> None:
+        """Optional hook for cancelling an in-progress repetition after pose loss."""
+        return
+
     @abstractmethod
     def evaluate(self, landmarks) -> Optional[BaseResult]:
         """

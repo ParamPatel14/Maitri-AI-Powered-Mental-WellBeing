@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, {
   createContext, useContext, useState,
-  useCallback, type ReactNode,
+  useCallback, useMemo, type ReactNode,
 } from 'react';
 import type {
   UserProfile,
@@ -19,9 +19,14 @@ import type {
   DataSourceConfig,
   TimelineEvent,
   LearnedInsight,
+  ExerciseSession,
+  WellnessActivity,
+  ReadinessInput,
+  ReadinessRecord,
 } from '../types/health-lab';
 import * as storage from '../lib/storage';
 import { today, getStreak } from '../lib/date-utils';
+import { buildWellnessActivities } from '../lib/wellness-activities';
 
 // ── Context shape ──────────────────────────────────────────────────────────────
 interface HealthLabState {
@@ -40,6 +45,10 @@ interface HealthLabState {
   dataSources: DataSourceConfig[];
   timeline: TimelineEvent[];
   learnedInsights: LearnedInsight[];
+  exerciseSessions: ExerciseSession[];
+  wellnessActivities: WellnessActivity[];
+  readinessInputs: ReadinessInput[];
+  readinessRecords: ReadinessRecord[];
   todaysCheckin: DailyCheckin | null;
   todaysHabitLog: HabitLog | null;
   streak: number;
@@ -63,6 +72,9 @@ interface HealthLabState {
   saveDataSource: (source: DataSourceConfig) => void;
   addTimelineEvent: (event: TimelineEvent) => void;
   addLearnedInsight: (insight: LearnedInsight) => void;
+  saveExerciseSession: (session: ExerciseSession) => void;
+  saveReadinessInput: (input: ReadinessInput) => void;
+  saveReadinessRecord: (record: ReadinessRecord) => void;
   refreshData: () => void;
   resetAll: () => void;
 }
@@ -86,6 +98,9 @@ export const HealthLabProvider: React.FC<{ children: ReactNode }> = ({ children 
   const [dataSources, setDataSources] = useState<DataSourceConfig[]>(() => storage.getDataSources());
   const [timeline, setTimeline] = useState<TimelineEvent[]>(() => storage.getTimeline());
   const [learnedInsights, setLearnedInsights] = useState<LearnedInsight[]>(() => storage.getLearnedInsights());
+  const [exerciseSessions, setExerciseSessions] = useState<ExerciseSession[]>(() => storage.getExerciseSessions());
+  const [readinessInputs, setReadinessInputs] = useState<ReadinessInput[]>(() => storage.getReadinessInputs());
+  const [readinessRecords, setReadinessRecords] = useState<ReadinessRecord[]>(() => storage.getReadinessRecords());
 
   const refreshData = useCallback(() => {
     setProfile(storage.getProfile());
@@ -103,6 +118,9 @@ export const HealthLabProvider: React.FC<{ children: ReactNode }> = ({ children 
     setDataSources(storage.getDataSources());
     setTimeline(storage.getTimeline());
     setLearnedInsights(storage.getLearnedInsights());
+    setExerciseSessions(storage.getExerciseSessions());
+    setReadinessInputs(storage.getReadinessInputs());
+    setReadinessRecords(storage.getReadinessRecords());
   }, []);
 
   const saveProfile = useCallback((p: UserProfile) => {
@@ -130,7 +148,7 @@ export const HealthLabProvider: React.FC<{ children: ReactNode }> = ({ children 
     const existing = storage.getHabitLogForDate(date);
     const habits = existing ? { ...existing.habits } : {};
     habits[habitId] = !habits[habitId];
-    const log: HabitLog = { date, habits };
+    const log: HabitLog = { date, habits, updatedAt: new Date().toISOString() };
     storage.saveHabitLog(log);
     setHabitLogs(storage.getHabitLogs());
   }, []);
@@ -210,6 +228,21 @@ export const HealthLabProvider: React.FC<{ children: ReactNode }> = ({ children 
     setLearnedInsights(storage.getLearnedInsights());
   }, []);
 
+  const saveExerciseSession_ = useCallback((session: ExerciseSession) => {
+    storage.saveExerciseSession(session);
+    setExerciseSessions(storage.getExerciseSessions());
+  }, []);
+
+  const saveReadinessInput_ = useCallback((input: ReadinessInput) => {
+    storage.saveReadinessInput(input);
+    setReadinessInputs(storage.getReadinessInputs());
+  }, []);
+
+  const saveReadinessRecord_ = useCallback((record: ReadinessRecord) => {
+    storage.saveReadinessRecord(record);
+    setReadinessRecords(storage.getReadinessRecords());
+  }, []);
+
   const resetAll = useCallback(() => {
     storage.resetAllData();
     refreshData();
@@ -218,10 +251,25 @@ export const HealthLabProvider: React.FC<{ children: ReactNode }> = ({ children 
   const todaysCheckin = checkins.find(c => c.date === today()) || null;
   const todaysHabitLog = habitLogs.find(l => l.date === today()) || null;
   const streak = getStreak(checkins.map(c => c.date));
+  const wellnessActivities = useMemo(() => buildWellnessActivities({
+    sessions: exerciseSessions,
+    checkins,
+    habitLogs,
+    cognitives,
+    wearables,
+    lifestyles,
+    postureSnapshots,
+    conversations,
+    insights,
+    experiments,
+    timeline,
+    readinessRecords,
+  }), [exerciseSessions, checkins, habitLogs, cognitives, wearables, lifestyles, postureSnapshots, conversations, insights, experiments, timeline, readinessRecords]);
 
   return (
     <HealthLabContext.Provider value={{
-      profile, checkins, habitLogs, insights, experiments, whatIfScenarios,
+      profile, checkins, habitLogs, insights, experiments, whatIfScenarios, exerciseSessions, wellnessActivities,
+      readinessInputs, readinessRecords,
       wearables, lifestyles, cognitives, conversations, postureSnapshots,
       baseline, dataSources, timeline, learnedInsights,
       todaysCheckin, todaysHabitLog, streak,
@@ -237,6 +285,8 @@ export const HealthLabProvider: React.FC<{ children: ReactNode }> = ({ children 
       saveDataSource: saveDataSource_,
       addTimelineEvent: addTimelineEvent_,
       addLearnedInsight: addLearnedInsight_,
+      saveExerciseSession: saveExerciseSession_,
+      saveReadinessInput: saveReadinessInput_, saveReadinessRecord: saveReadinessRecord_,
       refreshData, resetAll,
     }}>
       {children}

@@ -55,12 +55,16 @@ Check-in data (last 7 days):
 Habit tracking data:
 {habits}
 
+Exercise sessions (recent):
+{exercise_sessions}
+
 Write a summary that:
 1. Highlights their overall mood and energy trends
 2. Notes which habits they were consistent with
-3. Points out any patterns (e.g., "You seemed to feel better on days you walked")
-4. Offers one gentle suggestion for next week
-5. Ends on a positive, encouraging note
+3. Notes completed exercise sessions from the past week when available
+4. Points out any patterns (e.g., "You seemed to feel better on days you walked")
+5. Offers one gentle suggestion for next week
+6. Ends on a positive, encouraging note
 
 Keep the tone warm, conversational, and simple. No medical jargon.
 
@@ -87,6 +91,11 @@ Check-in data:
 
 Habit tracking data:
 {habits}
+
+Completed exercise sessions:
+{exercise_sessions}
+
+Treat workout sessions as physical activity when comparing activity days with mood and energy. Only report a pattern when the supplied dates and values support it.
 
 For each notable pattern you find, provide:
 - A short, friendly title
@@ -266,6 +275,11 @@ Lifestyle data (caffeine, water, screen time, etc.):
 
 Wearable data (sleep hours, steps, heart rate):
 {wearables}
+
+Completed exercise sessions:
+{exercise_sessions}
+
+Compare workout days with check-ins when there is enough overlapping data. Describe associations only; do not imply exercise caused a change in mood or energy.
 
 Analyze the data carefully. Look for patterns like:
 - "On days when you sleep more than X hours, your energy tends to be higher"
@@ -578,6 +592,21 @@ Lifestyle data:
 Wearable data:
 {wearables}
 
+Personal wellness baseline:
+{baseline}
+
+Completed exercise sessions:
+{exercise_sessions}
+
+Observed exercise performance endpoints, grouped by exercise:
+{performance_trends}
+
+Saved daily readiness assessments (each is a historical snapshot):
+{readiness_records}
+
+Cognitive assessment summaries:
+{cognitive_tests}
+
 Discovered patterns:
 {patterns}
 
@@ -593,14 +622,15 @@ Conversation history:
 The user says: "{user_message}"
 
 YOUR RULES:
-1. ALWAYS look at the user's actual data before answering. Reference specific numbers.
-2. Use language like "Your data shows...", "Based on your patterns...", "We noticed..."
-3. NEVER make up data. If you don't have enough information, say so.
-4. NEVER diagnose conditions or make medical claims.
-5. If the user asks about a problem, look for correlations in their data (e.g., "Your sleep has been lower than usual this week").
-6. If you can suggest an experiment, offer to help create one.
-7. Keep responses warm, concise, and helpful (2-4 paragraphs max).
-8. Connect your answers to what the system has already learned about the user.
+1. Use only records supplied above. Never invent, estimate, or fill in missing measurements.
+2. If records do not answer the question, say what is missing and avoid claiming a trend from fewer than two comparable observations.
+3. When discussing exercise performance, compare sessions of the same exercise and identify the values and dates used. Report repetition, form-consistency, issue, and duration trends only when those fields exist.
+4. Clearly separate observations from general suggestions (for example, label a suggestion as general guidance).
+5. Refer to readiness records as saved historical snapshots; do not recompute or reinterpret a past score from newer inputs. Readiness categories are general wellness guidance, not medical assessments.
+6. Never diagnose conditions or claim that any score determines medical fitness.
+7. When discussing cognition, describe the recorded test and score without implying a diagnosis.
+8. List in dataUsed only data sources you actually used, and use specific dates or counts where available.
+9. Keep responses warm, concise, and helpful (2-4 paragraphs max). Offer a possible experiment only when it fits the question and available data.
 
 If the user's question could be tested with an experiment, include a suggestedAction:
 - type: "create_experiment"
@@ -650,12 +680,14 @@ def analyze(task: str, data: dict[str, Any]) -> dict[str, Any]:
             profile=json.dumps(data.get("profile", {}), indent=2),
             checkins=json.dumps(data.get("checkins", []), indent=2),
             habits=json.dumps(data.get("habit_logs", []), indent=2),
+            exercise_sessions=json.dumps(data.get("exercise_sessions", []), indent=2),
         )
     elif task == "pattern_finder":
         prompt = PATTERN_FINDER_PROMPT.format(
             profile=json.dumps(data.get("profile", {}), indent=2),
             checkins=json.dumps(data.get("checkins", []), indent=2),
             habits=json.dumps(data.get("habit_logs", []), indent=2),
+            exercise_sessions=json.dumps(data.get("exercise_sessions", []), indent=2),
         )
     elif task == "experiment_analysis":
         prompt = EXPERIMENT_ANALYSIS_PROMPT.format(
@@ -688,6 +720,7 @@ def analyze(task: str, data: dict[str, Any]) -> dict[str, Any]:
             habits=json.dumps(data.get("habit_logs", []), indent=2),
             lifestyles=json.dumps(data.get("lifestyles", []), indent=2),
             wearables=json.dumps(data.get("wearables", []), indent=2),
+            exercise_sessions=json.dumps(data.get("exercise_sessions", []), indent=2),
         )
     elif task == "experiment_plan":
         prompt = EXPERIMENT_PLAN_PROMPT.format(
@@ -728,6 +761,11 @@ def analyze(task: str, data: dict[str, Any]) -> dict[str, Any]:
             habits=json.dumps(data.get("habit_logs", []), indent=2),
             lifestyles=json.dumps(data.get("lifestyles", []), indent=2),
             wearables=json.dumps(data.get("wearables", []), indent=2),
+            baseline=json.dumps(data.get("baseline", {}), indent=2),
+            exercise_sessions=json.dumps(data.get("exercise_sessions", []), indent=2),
+            performance_trends=json.dumps(data.get("performance_trends", []), indent=2),
+            readiness_records=json.dumps(data.get("readiness_records", []), indent=2),
+            cognitive_tests=json.dumps(data.get("cognitive_tests", []), indent=2),
             patterns=json.dumps(data.get("patterns", []), indent=2),
             experiments=json.dumps(data.get("experiments", []), indent=2),
             learned_insights=json.dumps(data.get("learned_insights", []), indent=2),

@@ -253,7 +253,11 @@ def process_frame(
                 "audio_cue": None,
             }
 
-    result = analyser.evaluate(landmarks) if landmarks is not None else None
+    if landmarks is None:
+        analyser.on_tracking_lost()
+        result = None
+    else:
+        result = analyser.evaluate(landmarks)
 
     # ── Audio routing ──────────────────────────────────────────────────────────
     audio_cue_payload = None

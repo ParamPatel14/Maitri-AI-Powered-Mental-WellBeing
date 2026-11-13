@@ -100,12 +100,12 @@ const MetricRow: React.FC<{ metric: BaselineMetric }> = ({ metric }) => {
 };
 
 export const BaselinePage: React.FC = () => {
-  const { checkins, wearables, lifestyles, cognitives, baseline, saveBaseline, addTimelineEvent } = useHealthLab();
+  const { checkins, wearables, lifestyles, cognitives, exerciseSessions, baseline, saveBaseline, addTimelineEvent } = useHealthLab();
 
   const computedBaseline = useMemo(() => {
-    if (checkins.length < 3 && wearables.length < 3 && lifestyles.length < 3) return null;
-    return computeBaseline({ checkins, wearables, lifestyles, cognitives });
-  }, [checkins, wearables, lifestyles, cognitives]);
+    if (checkins.length < 3 && wearables.length < 3 && lifestyles.length < 3 && exerciseSessions.length < 3) return null;
+    return computeBaseline({ checkins, wearables, lifestyles, cognitives, exerciseSessions });
+  }, [checkins, wearables, lifestyles, cognitives, exerciseSessions]);
 
   // Auto-save if baseline is fresh and differs
   const displayBaseline = computedBaseline || baseline;
@@ -138,7 +138,7 @@ export const BaselinePage: React.FC = () => {
   }
 
   const coreMetrics = displayBaseline.metrics.filter(m =>
-    ['mood', 'energy', 'sleepQuality', 'stressLevel', 'heartRateResting', 'steps', 'sleepHours'].includes(m.key)
+    ['mood', 'energy', 'sleepQuality', 'stressLevel', 'heartRateResting', 'steps', 'sleepHours', 'exerciseMinutes'].includes(m.key)
   );
   const lifestyleMetrics = displayBaseline.metrics.filter(m =>
     ['caffeine', 'alcohol', 'mealRegularity', 'waterIntake', 'outdoorTime', 'socialLevel', 'screenBeforeBed', 'workLoad'].includes(m.key)

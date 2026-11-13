@@ -1,7 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Activity, Stethoscope, Play, Loader2, AlertCircle, ArrowLeft, Zap } from 'lucide-react';
 import { useMaitriStream } from '../context/MaitriStreamContext';
+import { useHealthLab } from '../context/HealthLabContext';
+import { DailyReadinessCard } from './health-lab/shared/DailyReadinessCard';
+import { today } from '../lib/date-utils';
+import { calculateDailyReadiness, toReadinessRecord } from '../lib/readiness';
 import type { RehabRecommendation } from '../types/maitri';
 
 type Phase = 'input' | 'loading' | 'results' | 'error';
@@ -91,6 +95,24 @@ const EXERCISE_TUTORIALS: Record<string, { recommendedView: 'side' | 'front' | '
       'Move smoothly; avoid locking out aggressively.',
     ],
   },
+  'Lunges': {
+    recommendedView: 'front',
+    setup: ['Place the camera at about hip height.', 'Keep your full body and both legs visible.', 'Face the camera so knee alignment is easy to see.'],
+    steps: ['Stand tall with feet about hip-width apart.', 'Step forward and lower under control.', 'Push through the front foot to return to standing.'],
+    tips: ['Keep the front knee tracking over the foot.', 'Use a comfortable depth and keep your torso steady.'],
+  },
+  'Deadlifts': {
+    recommendedView: 'side',
+    setup: ['Place the camera at hip height, about 2 meters away.', 'Turn sideways and keep shoulders, hips, knees, and ankles visible.'],
+    steps: ['Start standing tall with feet about hip-width apart.', 'Hinge at the hips and bend your knees slightly.', 'Drive through your feet and stand tall again.'],
+    tips: ['Keep your spine neutral and chest open.', 'Move slowly and use a comfortable range of motion.'],
+  },
+  'Jumping Jacks': {
+    recommendedView: 'front',
+    setup: ['Place the camera at about hip height and far enough back to show your full body.', 'Face the camera directly.', 'Keep both wrists, shoulders, hips, knees, and ankles in frame.'],
+    steps: ['Start standing with arms by your sides and feet together.', 'Move both arms overhead while stepping both feet apart.', 'Bring arms and feet back together to complete one cycle.'],
+    tips: ['Move both arms and legs together at a comfortable pace.', 'Land softly and use a smaller step if needed.'],
+  },
 };
 
 // ── Exercise card ──────────────────────────────────────────────────────────────
@@ -130,6 +152,7 @@ const ConnectingOverlay: React.FC = () => (
 export const RehabScreen: React.FC = () => {
   const navigate = useNavigate();
   const { availableExercises, startSession, isConnecting, error: wsError, patient, goalMode, setPatientName, setGoalMode } = useMaitriStream();
+  const { checkins, readinessInputs, wearables, exerciseSessions, saveReadinessRecord } = useHealthLab();
 
   const [problem,         setProblem]         = useState('');
   const [phase,           setPhase]           = useState<Phase>('input');
@@ -138,12 +161,7 @@ export const RehabScreen: React.FC = () => {
   const [quickExercise,   setQuickExercise]   = useState('');
   const [tutorialFor,     setTutorialFor]     = useState<string | null>(null);
 
-  // Seed the quick-start dropdown once the registry loads
-  useEffect(() => {
-    if (availableExercises.length > 0 && !quickExercise) {
-      setQuickExercise(availableExercises[0]);
-    }
-  }, [availableExercises, quickExercise]);
+  const selectedQuickExercise = quickExercise || availableExercises[0] || '';
 
   const isAvailable = (exercise: string) =>
     availableExercises.some(e => e.toLowerCase() === exercise.toLowerCase());
@@ -152,9 +170,25 @@ export const RehabScreen: React.FC = () => {
     setTutorialFor(exercise);
   };
 
+  const startWithReadiness = (exercise: string) => {
+    const date = today();
+    const assessment = calculateDailyReadiness({
+      date,
+      asOf: new Date().toISOString(),
+      checkin: checkins.find(item => item.date === date) ?? null,
+      readinessInput: readinessInputs.find(item => item.date === date) ?? null,
+      wearables,
+      sessions: exerciseSessions,
+    });
+    const record = toReadinessRecord(assessment, new Date().toISOString());
+    if (record) saveReadinessRecord(record);
+    startSession(exercise);
+    setTutorialFor(null);
+  };
+
   const tutorialModal = tutorialFor ? (
     <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/40 backdrop-blur-sm px-6">
-      <div className="w-full max-w-2xl rounded-3xl border border-zinc-200 bg-white text-zinc-950 shadow-2xl overflow-hidden">
+      <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl border border-zinc-200 bg-white text-zinc-950 shadow-2xl">
         <div className="p-6 border-b border-zinc-100">
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -212,6 +246,8 @@ export const RehabScreen: React.FC = () => {
           })()}
         </div>
 
+        <div className="px-6 pt-1"><DailyReadinessCard compact /></div>
+
         <div className="p-6 border-t border-zinc-100 flex flex-col md:flex-row gap-3 justify-end">
           <button
             onClick={() => setTutorialFor(null)}
@@ -220,7 +256,7 @@ export const RehabScreen: React.FC = () => {
             Back
           </button>
           <button
-            onClick={() => { if (isAvailable(tutorialFor)) { startSession(tutorialFor); setTutorialFor(null); } }}
+            onClick={() => { if (isAvailable(tutorialFor)) startWithReadiness(tutorialFor); }}
             disabled={!isAvailable(tutorialFor)}
             className="px-6 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-bold shadow-sm"
           >
@@ -453,7 +489,7 @@ export const RehabScreen: React.FC = () => {
         {/* Quick start */}
         <div className="flex gap-3">
           <select
-            value={quickExercise}
+            value={selectedQuickExercise}
             onChange={e => setQuickExercise(e.target.value)}
             className="flex-1 bg-white border border-zinc-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500 transition-all appearance-none"
           >
@@ -463,8 +499,8 @@ export const RehabScreen: React.FC = () => {
             }
           </select>
           <button
-            onClick={() => quickExercise && openTutorial(quickExercise)}
-            disabled={!quickExercise}
+            onClick={() => selectedQuickExercise && openTutorial(selectedQuickExercise)}
+            disabled={!selectedQuickExercise}
             className="flex items-center gap-2 bg-zinc-900 hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98] text-white font-semibold rounded-xl px-4 py-2.5 text-sm transition-all duration-150 shadow-sm"
           >
             <Zap className="w-4 h-4 text-emerald-400" />

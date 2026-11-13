@@ -23,6 +23,9 @@ from exercises.push_ups.analyser import PushUpAnalytics
 from exercises.planks.analyser   import PlankAnalytics
 from exercises.bicep_curls.analyser import BicepCurlAnalytics
 from exercises.shoulder_press.analyser import ShoulderPressAnalytics
+from exercises.lunges.analyser import LungeAnalytics
+from exercises.deadlifts.analyser import DeadliftAnalytics
+from exercises.jumping_jacks.analyser import JumpingJackAnalytics
 
 # ── Registry ───────────────────────────────────────────────────────────────────
 # Maps human-readable exercise name  →  BaseAnalyser subclass (not instance).
@@ -33,6 +36,7 @@ EXERCISE_REGISTRY: dict[str, type] = {
     "Planks":   PlankAnalytics,
     "Bicep Curls": BicepCurlAnalytics,
     "Shoulder Press": ShoulderPressAnalytics,
-    # "Lunges":    LungeAnalytics,    ← example future entry
-    # "Deadlifts": DeadliftAnalytics,
+    "Lunges": LungeAnalytics,
+    "Deadlifts": DeadliftAnalytics,
+    "Jumping Jacks": JumpingJackAnalytics,
 }

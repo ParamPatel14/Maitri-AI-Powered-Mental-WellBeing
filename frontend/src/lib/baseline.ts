@@ -13,6 +13,7 @@ import type {
   WearableData,
   LifestyleEntry,
   CognitiveTestResult,
+  ExerciseSession,
   PersonalBaseline,
   BaselineMetric,
   BaselineConfig,
@@ -82,12 +83,12 @@ function getStatus(deviation: number | null): BaselineMetric['status'] {
 
 function extractCheckinMetrics(checkins: DailyCheckin[]): Record<string, number[]> {
   const metrics: Record<string, number[]> = {};
-  const keys: (keyof DailyCheckin)[] = ['mood', 'energy', 'sleepQuality', 'stressLevel'];
+  const keys = ['mood', 'energy', 'sleepQuality', 'stressLevel'] as const;
 
   for (const key of keys) {
     metrics[key] = checkins
       .map(c => c[key])
-      .filter((v): v is number => typeof v === 'number');
+      .filter(v => typeof v === 'number');
   }
 
   return metrics;
@@ -186,6 +187,7 @@ const METRIC_META: Record<string, { label: string; unit: string }> = {
   socialLevel: { label: 'Social Interaction', unit: '/3' },
   screenBeforeBed: { label: 'Screen Before Bed', unit: 'hrs' },
   workLoad: { label: 'Work Load', unit: '/3' },
+  exerciseMinutes: { label: 'Exercise Duration', unit: 'min' },
   cognitive_reaction_time: { label: 'Reaction Time', unit: '/100' },
   cognitive_working_memory: { label: 'Working Memory', unit: '/100' },
   cognitive_sustained_attention: { label: 'Sustained Attention', unit: '/100' },
@@ -199,10 +201,23 @@ export function computeBaseline(params: {
   wearables: WearableData[];
   lifestyles: LifestyleEntry[];
   cognitives: CognitiveTestResult[];
+  exerciseSessions?: ExerciseSession[];
   config?: Partial<BaselineConfig>;
 }): PersonalBaseline {
   const config = { ...DEFAULT_CONFIG, ...params.config };
   const today_ = today();
+  const exerciseSessions = params.exerciseSessions ?? [];
+  const activityDates = new Set([
+    ...params.checkins.map(item => item.date),
+    ...params.wearables.map(item => item.date),
+    ...params.lifestyles.map(item => item.date),
+    ...exerciseSessions.map(item => item.date),
+  ]);
+  const exerciseMinutesByDate = new Map<string, number>();
+  exerciseSessions.forEach(session => exerciseMinutesByDate.set(
+    session.date,
+    (exerciseMinutesByDate.get(session.date) ?? 0) + session.durationSeconds / 60,
+  ));
 
   // Gather all metrics
   const allMetrics: Record<string, number[]> = {
@@ -210,6 +225,7 @@ export function computeBaseline(params: {
     ...extractWearableMetrics(params.wearables),
     ...extractLifestyleMetrics(params.lifestyles),
     ...extractCognitiveMetrics(params.cognitives),
+    exerciseMinutes: [...activityDates].map(date => exerciseMinutesByDate.get(date) ?? 0),
   };
 
   // Build today's values from checkins
@@ -235,6 +251,9 @@ export function computeBaseline(params: {
     todayValues.caffeine = { none: 0, '1-2': 1.5, '3-4': 3.5, '5+': 5 }[todayLifestyle.caffeineIntake];
     todayValues.outdoorTime = { none: 0, less_30m: 0.5, '30m_1h': 1, '1h_plus': 2 }[todayLifestyle.outdoorTime];
   }
+  if (activityDates.has(today_)) {
+    todayValues.exerciseMinutes = exerciseMinutesByDate.get(today_) ?? 0;
+  }
 
   // Compute baseline for each metric
   const metrics: BaselineMetric[] = [];
@@ -255,10 +274,14 @@ export function computeBaseline(params: {
 
     // Determine trend from recent data
     const recentDays = getLastNDays(config.trendWindow);
-    const recentValues = params.checkins
-      .filter(c => recentDays.includes(c.date))
-      .map(c => (c as Record<string, unknown>)[key] as number)
-      .filter(v => typeof v === 'number');
+    const recentValues = key === 'exerciseMinutes'
+      ? recentDays.filter(date => activityDates.has(date)).map(date => exerciseMinutesByDate.get(date) ?? 0)
+      : params.checkins
+        .filter(c => recentDays.includes(c.date))
+        .flatMap(c => {
+          const value = c[key as keyof DailyCheckin];
+          return typeof value === 'number' ? [value] : [];
+        });
     const trend = recentValues.length >= 4 ? detectTrend(recentValues) : 'insufficient';
 
     metrics.push({
@@ -299,6 +322,7 @@ export function computeBaseline(params: {
     ...params.checkins.map(c => c.date),
     ...params.wearables.map(w => w.date),
     ...params.lifestyles.map(l => l.date),
+    ...exerciseSessions.map(session => session.date),
   ].sort();
 
   return {

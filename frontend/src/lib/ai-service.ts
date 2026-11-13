@@ -19,6 +19,8 @@ import type {
   HealthScientistMessage,
   LearnedInsight,
 } from '../types/health-lab';
+import * as storage from './storage';
+import { getLastNDays } from './date-utils';
 
 const RAW_BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:8000';
 const BACKEND_URL = String(RAW_BACKEND_URL)
@@ -26,10 +28,55 @@ const BACKEND_URL = String(RAW_BACKEND_URL)
   .replace('http://localhost', 'http://127.0.0.1');
 
 async function callAnalyze(task: string, data: Record<string, unknown>): Promise<unknown> {
+  const sessionHistory = storage.getExerciseSessions();
+  const relevantSessions = task === 'weekly_report'
+    ? sessionHistory.filter(session => getLastNDays(7).includes(session.date))
+    : task === 'health_scientist_chat'
+      ? sessionHistory.filter(session => {
+        const timestamp = new Date(session.completedAt).getTime();
+        const age = Date.now() - timestamp;
+        return Number.isFinite(timestamp) && age >= 0 && age <= 90 * 24 * 60 * 60 * 1000;
+      }).slice(-60)
+      : sessionHistory;
+  const performanceTrends = task === 'health_scientist_chat'
+    ? Object.entries(relevantSessions.reduce<Record<string, typeof relevantSessions>>((groups, session) => {
+      (groups[session.exercise] ??= []).push(session);
+      return groups;
+    }, {})).map(([exercise, sessions]) => {
+      const ordered = [...sessions].sort((a, b) => a.completedAt.localeCompare(b.completedAt));
+      const first = ordered[0];
+      const last = ordered[ordered.length - 1];
+      return {
+        exercise,
+        session_count: ordered.length,
+        from: first.date,
+        to: last.date,
+        first_reps: first.repCount,
+        latest_reps: last.repCount,
+        first_form_consistency: first.formConsistencyScore,
+        latest_form_consistency: last.formConsistencyScore,
+        form_consistency_change: first.formConsistencyScore == null || last.formConsistencyScore == null
+          ? null
+          : Number((last.formConsistencyScore - first.formConsistencyScore).toFixed(1)),
+      };
+    })
+    : [];
   const res = await fetch(`${BACKEND_URL}/health-lab/analyze`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ task, ...data }),
+    body: JSON.stringify({
+      task,
+      ...data,
+      exercise_sessions: relevantSessions.map(({ date, exercise, durationSeconds, repCount, formConsistencyScore, detectedFormIssues, completionStatus, metrics, goalMode }) => ({
+        date, exercise, durationSeconds, repCount, formConsistencyScore, detectedFormIssues, completionStatus, metrics, goalMode,
+      })),
+      ...(task === 'health_scientist_chat' ? {
+        baseline: storage.getBaseline(),
+        performance_trends: performanceTrends,
+        readiness_records: storage.getReadinessRecords().slice(-30),
+        cognitive_tests: storage.getCognitiveTests().slice(-20).map(({ date, testType, score, rawMetrics, durationMs }) => ({ date, testType, score, rawMetrics, durationMs })),
+      } : {}),
+    }),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: 'Request failed' }));

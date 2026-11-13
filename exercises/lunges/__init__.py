@@ -1,0 +1,1 @@
+"""Lunge exercise analyser plugin."""

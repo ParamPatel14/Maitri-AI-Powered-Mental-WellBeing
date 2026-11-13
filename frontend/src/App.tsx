@@ -33,7 +33,7 @@ const AppContent: React.FC = () => {
     <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/physical" element={<RehabScreen />} />
-      <Route path="/health-lab" element={<HealthLabProvider><HealthLabShell /></HealthLabProvider>}>
+      <Route path="/health-lab" element={<HealthLabShell />}>
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="checkin" element={<CheckinPage />} />
@@ -59,9 +59,11 @@ const AppContent: React.FC = () => {
 
 function App() {
   return (
-    <MaitriProvider>
-      <AppContent />
-    </MaitriProvider>
+    <HealthLabProvider>
+      <MaitriProvider>
+        <AppContent />
+      </MaitriProvider>
+    </HealthLabProvider>
   );
 }
 

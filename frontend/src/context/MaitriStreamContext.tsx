@@ -4,11 +4,20 @@ import React, {
   useRef, useCallback, type ReactNode,
 } from 'react';
 import type { MaitriFrame } from '../types/maitri';
+import { useHealthLab } from './HealthLabContext';
+import { today } from '../lib/date-utils';
+import { createExerciseSessionSummary, type ExerciseSessionDraft } from '../lib/workout-summary';
+
+interface SessionDraft extends ExerciseSessionDraft {
+  connected: boolean;
+  finalized: boolean;
+}
 
 // ── Context shape ──────────────────────────────────────────────────────────────
 interface MaitriContextState {
   availableExercises: string[];
   currentExercise:    string | null;
+  sessionStartedAt:   number | null;
   isConnected:        boolean;
   isConnecting:       boolean;
   frame:              MaitriFrame | null;
@@ -49,8 +58,10 @@ function speakCue(text: string, urgent: boolean): void {
 
 // ── Provider ───────────────────────────────────────────────────────────────────
 export const MaitriProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const { saveExerciseSession } = useHealthLab();
   const [availableExercises, setAvailableExercises] = useState<string[]>([]);
   const [currentExercise,    setCurrentExercise]    = useState<string | null>(null);
+  const [sessionStartedAt,   setSessionStartedAt]   = useState<number | null>(null);
   const [isConnected,        setIsConnected]        = useState(false);
   const [isConnecting,       setIsConnecting]       = useState(false);
   const [frame,              setFrame]              = useState<MaitriFrame | null>(null);
@@ -59,6 +70,8 @@ export const MaitriProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const [goalMode,           setGoalMode]           = useState<'Rehab' | 'Strength' | 'Endurance'>('Rehab');
 
   const wsRef = useRef<WebSocket | null>(null);
+  const sessionRef = useRef<SessionDraft | null>(null);
+  const latestFrameRef = useRef<MaitriFrame | null>(null);
 
   const RAW_BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:8000';
   const RAW_WS_URL      = import.meta.env.VITE_WS_URL      || 'ws://127.0.0.1:8000/ws';
@@ -136,9 +149,32 @@ export const MaitriProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     ws.send(JSON.stringify({ type: 'frame', data: dataUrl }));
   }, []);
 
+  const finalizeSession = useCallback((completionStatus: 'completed' | 'interrupted' = 'completed') => {
+    const session = sessionRef.current;
+    if (!session || !session.connected || session.finalized) return;
+    session.finalized = true;
+    const completedAt = new Date();
+    const latestResult = latestFrameRef.current?.result;
+    const reps = latestResult?.rep_count ?? 0;
+    saveExerciseSession(createExerciseSessionSummary({
+      session,
+      completedAtMs: completedAt.getTime(),
+      date: today(),
+      completionStatus,
+      repCount: reps,
+    }));
+  }, [saveExerciseSession]);
+
   // ── startSession ─────────────────────────────────────────────────────────────
   const startSession = useCallback((exercise: string) => {
+    const startedAt = Date.now();
+    sessionRef.current = {
+      id: crypto.randomUUID(), exercise, startedAt, goalMode, patientName: patient?.name ?? null,
+      connected: false, finalized: false, issueFrameCounts: {}, latestMetrics: {},
+    };
+    latestFrameRef.current = null;
     setCurrentExercise(exercise);
+    setSessionStartedAt(startedAt);
     setIsConnecting(true);
     setError(null);
     setFrame(null);
@@ -159,11 +195,13 @@ export const MaitriProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     };
 
     ws.onmessage = (event: MessageEvent) => {
+      if (wsRef.current !== ws) return;
       try {
         const payload = JSON.parse(event.data as string);
         const status: string = payload.status;
 
         if (status === 'session_started') {
+          if (sessionRef.current?.exercise === exercise) sessionRef.current.connected = true;
           setIsConnected(true);
           return;
         }
@@ -174,6 +212,21 @@ export const MaitriProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         }
 
         if (status === 'ok' || status === 'no_pose' || status === 'calibrating' || status === 'decode_error') {
+          latestFrameRef.current = payload as MaitriFrame;
+          const result = (payload as MaitriFrame).result;
+          const session = sessionRef.current;
+          if (result && session?.exercise === exercise) {
+            session.latestMetrics = Object.fromEntries(Object.entries(result.metrics ?? {}).filter(([, value]) =>
+              typeof value === 'number' || typeof value === 'string' || typeof value === 'boolean')) as SessionDraft['latestMetrics'];
+            if (result.has_issue) {
+              const issueKeys = Object.entries(result.metrics ?? {})
+                .filter(([key, value]) => key !== 'has_issue' && value === true)
+                .map(([key]) => key);
+              for (const key of issueKeys.length ? issueKeys : ['form_issue']) {
+                session.issueFrameCounts[key] = (session.issueFrameCounts[key] ?? 0) + 1;
+              }
+            }
+          }
           setFrame(payload as MaitriFrame);
 
           // ── Web Speech API audio routing ───────────────────────────────────
@@ -189,8 +242,13 @@ export const MaitriProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     };
 
     ws.onclose = () => {
+      if (wsRef.current !== ws) return;
+      finalizeSession('interrupted');
+      wsRef.current = null;
       setIsConnected(false);
       setIsConnecting(false);
+      setCurrentExercise(null);
+      setSessionStartedAt(null);
     };
 
     ws.onerror = () => {
@@ -200,24 +258,28 @@ export const MaitriProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     };
 
     wsRef.current = ws;
-  }, [WS_URL, goalMode, patient, CALIBRATION_SECONDS]);
+  }, [WS_URL, goalMode, patient, CALIBRATION_SECONDS, finalizeSession]);
 
   // ── stopSession ──────────────────────────────────────────────────────────────
   const stopSession = useCallback(() => {
+    finalizeSession();
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify({ type: 'stop' }));
       wsRef.current.close();
     }
     wsRef.current = null;
+    sessionRef.current = null;
+    latestFrameRef.current = null;
     setCurrentExercise(null);
+    setSessionStartedAt(null);
     setFrame(null);
     setIsConnected(false);
     window.speechSynthesis?.cancel();
-  }, []);
+  }, [finalizeSession]);
 
   return (
     <MaitriContext.Provider value={{
-      availableExercises, currentExercise,
+      availableExercises, currentExercise, sessionStartedAt,
       isConnected, isConnecting,
       frame, error,
       patient, goalMode,

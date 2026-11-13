@@ -75,11 +75,6 @@ export const ConversationalCheckin: React.FC = () => {
     const userMsg: ChatMessage = { role: 'user', text: answer, timestamp: new Date().toISOString() };
     setMessages(prev => [...prev, userMsg]);
 
-    // Handle lifestyle select questions
-    if ('options' in q) {
-      setSelectedLifestyle(prev => ({ ...prev, [q.id]: answer }));
-    }
-
     // Next question or complete
     const nextIdx = currentQuestionIdx + 1;
     if (nextIdx < allQuestions.length) {

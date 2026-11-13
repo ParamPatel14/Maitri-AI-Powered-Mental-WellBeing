@@ -28,6 +28,66 @@ export interface DailyCheckin {
   completedAt: string;
 }
 
+/** Supplemental values used only when the daily check-in or wearable has no value. */
+export interface ReadinessInput {
+  date: string;
+  mood?: 1 | 2 | 3 | 4 | 5;
+  energy?: 1 | 2 | 3 | 4 | 5;
+  sleepQuality?: 1 | 2 | 3 | 4 | 5;
+  sleepDurationHours?: number;
+  fatigue?: 1 | 2 | 3 | 4 | 5;
+  recentActivityMinutes?: number;
+  updatedAt: string;
+}
+
+export type ReadinessCategory = 'high' | 'moderate' | 'low';
+
+export interface ReadinessFactor {
+  key: 'sleep' | 'energy' | 'fatigue' | 'mood' | 'activity';
+  label: string;
+  value: string;
+  normalizedScore: number | null;
+  weight: number;
+  contribution: number | null;
+  source: string;
+}
+
+/** Immutable snapshot of the inputs and result at the time the user saved it. */
+export interface ReadinessRecord {
+  id: string;
+  assessmentKey: string;
+  date: string;
+  timestamp: string;
+  score: number;
+  category: ReadinessCategory;
+  factors: ReadinessFactor[];
+  inputs: Record<string, number | string | null>;
+  missingInputs: string[];
+  recommendation: string;
+}
+
+/** Completed browser exercise session recorded for cross-feature wellness views. */
+export interface ExerciseSession {
+  id: string;
+  activityType: 'workout_session';
+  source: 'live_exercise_coaching';
+  date: string;
+  exercise: string;
+  startedAt: string;
+  completedAt: string;
+  durationSeconds: number;
+  repCount: number;
+  setsCompleted?: number | null;
+  formConsistencyScore: number | null;
+  detectedFormIssues: Array<{ name: string; frameCount: number }>;
+  completionStatus: 'completed' | 'interrupted';
+  metrics: Record<string, number | string | boolean>;
+  goalMode: 'Rehab' | 'Strength' | 'Endurance';
+  patientName: string | null;
+  /** Legacy v3 storage field; normalized to formConsistencyScore on load. */
+  sessionScore?: number | null;
+}
+
 // ── Smartwatch / Wearable Data ─────────────────────────────────────────────────
 export interface WearableData {
   date: string;
@@ -151,6 +211,7 @@ export interface DataSourceConfig {
 export interface HabitLog {
   date: string;
   habits: Record<string, boolean>;
+  updatedAt?: string;
 }
 
 // ── AI Insights ────────────────────────────────────────────────────────────────
@@ -469,6 +530,7 @@ export const DAILY_QUESTIONS = [
 
 // ── Timeline Events ───────────────────────────────────────────────────────────
 export type TimelineEventType =
+  | 'exercise_session_completed'
   | 'data_collection_started'
   | 'pattern_discovered'
   | 'experiment_started'
@@ -479,6 +541,32 @@ export type TimelineEventType =
   | 'milestone_reached'
   | 'insight_learned'
   | 'checkin_streak';
+
+export type WellnessActivityType =
+  | 'workout_session'
+  | 'readiness_assessment'
+  | 'daily_checkin'
+  | 'habit_completion'
+  | 'cognitive_test'
+  | 'wearable_entry'
+  | 'lifestyle_entry'
+  | 'posture_snapshot'
+  | 'conversation'
+  | 'insight'
+  | 'experiment'
+  | 'timeline_event';
+
+export interface WellnessActivity {
+  id: string;
+  activityType: WellnessActivityType;
+  source: 'live_exercise_coaching' | 'health_lab' | 'wearable' | 'manual';
+  timestamp: string;
+  /** Some legacy daily logs contain a date but no recorded time. */
+  timePrecision: 'exact' | 'date_only';
+  title: string;
+  summary: string;
+  data: Record<string, unknown>;
+}
 
 export interface TimelineEvent {
   id: string;

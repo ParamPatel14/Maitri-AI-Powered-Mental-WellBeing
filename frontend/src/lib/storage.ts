@@ -14,10 +14,13 @@ import type {
   DataSourceConfig,
   TimelineEvent,
   LearnedInsight,
+  ExerciseSession,
+  ReadinessInput,
+  ReadinessRecord,
 } from '../types/health-lab';
 
 const STORE_KEY = 'maitri.healthlab';
-const SCHEMA_VERSION = 2;
+const SCHEMA_VERSION = 5;
 
 interface HealthLabStore {
   version: number;
@@ -36,6 +39,9 @@ interface HealthLabStore {
   dataSources: DataSourceConfig[];
   timeline: TimelineEvent[];
   learnedInsights: LearnedInsight[];
+  exerciseSessions: ExerciseSession[];
+  readinessInputs: ReadinessInput[];
+  readinessRecords: ReadinessRecord[];
 }
 
 function defaultStore(): HealthLabStore {
@@ -56,6 +62,52 @@ function defaultStore(): HealthLabStore {
     dataSources: [],
     timeline: [],
     learnedInsights: [],
+    exerciseSessions: [],
+    readinessInputs: [],
+    readinessRecords: [],
+  };
+}
+
+function normalizeExerciseSession(value: unknown, index: number): ExerciseSession | null {
+  if (!value || typeof value !== 'object') return null;
+  const raw = value as Record<string, unknown>;
+  const startedAt = typeof raw.startedAt === 'string' ? raw.startedAt : null;
+  const completedAt = typeof raw.completedAt === 'string' ? raw.completedAt : startedAt;
+  if (!completedAt) return null;
+  const date = typeof raw.date === 'string' ? raw.date : completedAt.slice(0, 10);
+  const metrics = raw.metrics && typeof raw.metrics === 'object' && !Array.isArray(raw.metrics)
+    ? Object.fromEntries(Object.entries(raw.metrics as Record<string, unknown>).filter(([, metric]) =>
+      typeof metric === 'number' || typeof metric === 'string' || typeof metric === 'boolean')) as ExerciseSession['metrics']
+    : {};
+  const detectedFormIssues = Array.isArray(raw.detectedFormIssues)
+    ? raw.detectedFormIssues.flatMap(issue => {
+      if (!issue || typeof issue !== 'object') return [];
+      const item = issue as Record<string, unknown>;
+      return typeof item.name === 'string'
+        ? [{ name: item.name, frameCount: typeof item.frameCount === 'number' ? item.frameCount : 1 }]
+        : [];
+    })
+    : [];
+
+  return {
+    id: typeof raw.id === 'string' ? raw.id : `legacy-workout-${date}-${index}`,
+    activityType: 'workout_session',
+    source: 'live_exercise_coaching',
+    date,
+    exercise: typeof raw.exercise === 'string' ? raw.exercise : 'Exercise session',
+    startedAt: startedAt ?? completedAt,
+    completedAt,
+    durationSeconds: typeof raw.durationSeconds === 'number' ? Math.max(0, raw.durationSeconds) : 0,
+    repCount: typeof raw.repCount === 'number' ? Math.max(0, raw.repCount) : 0,
+    ...(typeof raw.setsCompleted === 'number' ? { setsCompleted: Math.max(0, raw.setsCompleted) } : {}),
+    formConsistencyScore: typeof raw.formConsistencyScore === 'number'
+      ? raw.formConsistencyScore
+      : typeof raw.sessionScore === 'number' ? raw.sessionScore : null,
+    detectedFormIssues,
+    completionStatus: raw.completionStatus === 'interrupted' ? 'interrupted' : 'completed',
+    metrics,
+    goalMode: raw.goalMode === 'Strength' || raw.goalMode === 'Endurance' ? raw.goalMode : 'Rehab',
+    patientName: typeof raw.patientName === 'string' ? raw.patientName : null,
   };
 }
 
@@ -63,9 +115,21 @@ export function loadStore(): HealthLabStore {
   try {
     const raw = localStorage.getItem(STORE_KEY);
     if (!raw) return defaultStore();
-    const parsed = JSON.parse(raw);
-    if (parsed.version !== SCHEMA_VERSION) return defaultStore();
-    return parsed;
+    const parsed = JSON.parse(raw) as Partial<HealthLabStore>;
+    return {
+      ...defaultStore(),
+      ...parsed,
+      version: SCHEMA_VERSION,
+      exerciseSessions: Array.isArray(parsed.exerciseSessions)
+        ? parsed.exerciseSessions.map(normalizeExerciseSession).filter((item): item is ExerciseSession => item !== null)
+          .filter((item, index, all) => all.findIndex(candidate => candidate.id === item.id) === index)
+        : [],
+      readinessInputs: Array.isArray(parsed.readinessInputs) ? parsed.readinessInputs : [],
+      readinessRecords: Array.isArray(parsed.readinessRecords)
+        ? parsed.readinessRecords.filter((item): item is ReadinessRecord => Boolean(item && typeof item === 'object' && typeof item.id === 'string' && typeof item.assessmentKey === 'string' && typeof item.score === 'number' && typeof item.timestamp === 'string'))
+          .filter((item, index, all) => all.findIndex(candidate => candidate.assessmentKey === item.assessmentKey) === index)
+        : [],
+    };
   } catch {
     return defaultStore();
   }
@@ -318,4 +382,43 @@ export function addLearnedInsight(insight: LearnedInsight): void {
 
 export function getLearnedInsightsByCategory(category: LearnedInsight['category']): LearnedInsight[] {
   return loadStore().learnedInsights.filter(i => i.category === category);
+}
+
+export function getExerciseSessions(): ExerciseSession[] {
+  return loadStore().exerciseSessions;
+}
+
+export function saveExerciseSession(session: ExerciseSession): void {
+  const store = loadStore();
+  const existing = store.exerciseSessions.findIndex(item => item.id === session.id);
+  if (existing >= 0) store.exerciseSessions[existing] = session;
+  else store.exerciseSessions.push(session);
+  store.exerciseSessions.sort((a, b) => a.completedAt.localeCompare(b.completedAt));
+  saveStore(store);
+}
+
+export function getReadinessInputs(): ReadinessInput[] {
+  return loadStore().readinessInputs;
+}
+
+export function saveReadinessInput(input: ReadinessInput): void {
+  const store = loadStore();
+  const index = store.readinessInputs.findIndex(item => item.date === input.date);
+  if (index >= 0) store.readinessInputs[index] = { ...store.readinessInputs[index], ...input };
+  else store.readinessInputs.push(input);
+  store.readinessInputs.sort((a, b) => a.date.localeCompare(b.date));
+  saveStore(store);
+}
+
+export function getReadinessRecords(): ReadinessRecord[] {
+  return loadStore().readinessRecords;
+}
+
+/** Idempotent append: an existing input snapshot is never rewritten. */
+export function saveReadinessRecord(record: ReadinessRecord): void {
+  const store = loadStore();
+  if (store.readinessRecords.some(item => item.assessmentKey === record.assessmentKey)) return;
+  store.readinessRecords.push(record);
+  store.readinessRecords.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+  saveStore(store);
 }

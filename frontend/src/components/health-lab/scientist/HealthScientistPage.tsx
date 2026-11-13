@@ -1,18 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, FlaskConical, Sparkles, Target, Clock, RefreshCw } from 'lucide-react';
 import { useHealthLab } from '../../../context/HealthLabContext';
-import { chatWithHealthScientist, discoverPatterns } from '../../../lib/ai-service';
+import { chatWithHealthScientist } from '../../../lib/ai-service';
 import { today } from '../../../lib/date-utils';
-import type { HealthScientistMessage, DiscoveredPattern } from '../../../types/health-lab';
+import type { HealthScientistMessage } from '../../../types/health-lab';
 
 export const HealthScientistPage: React.FC = () => {
-  const { profile, checkins, habitLogs, lifestyles, wearables, experiments, learnedInsights, addTimelineEvent } = useHealthLab();
+  const { profile, checkins, habitLogs, lifestyles, wearables, experiments, learnedInsights, exerciseSessions, readinessRecords, cognitives, addTimelineEvent } = useHealthLab();
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const hasEnoughData = checkins.length >= 3;
+  const hasEnoughData = checkins.length >= 3 || exerciseSessions.length > 0 || readinessRecords.length > 0 || cognitives.length > 0;
 
   const [messages, setMessages] = useState<HealthScientistMessage[]>(() => [{
     id: crypto.randomUUID(),
@@ -43,15 +43,6 @@ export const HealthScientistPage: React.FC = () => {
     setLoading(true);
 
     try {
-      // Get or discover patterns
-      let patterns: DiscoveredPattern[] = [];
-      try {
-        const patternResult = await discoverPatterns(profile!, checkins, habitLogs, lifestyles, wearables);
-        patterns = patternResult.patterns;
-      } catch {
-        // Patterns may fail, continue without them
-      }
-
       const conversationHistory = messages.slice(-10).map(m => ({
         role: m.role,
         content: m.content,
@@ -63,7 +54,7 @@ export const HealthScientistPage: React.FC = () => {
         habitLogs,
         lifestyles,
         wearables,
-        patterns,
+        [],
         experiments,
         learnedInsights,
         conversationHistory,

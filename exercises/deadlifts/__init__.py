@@ -1,0 +1,1 @@
+"""Deadlift exercise analyser plugin."""
